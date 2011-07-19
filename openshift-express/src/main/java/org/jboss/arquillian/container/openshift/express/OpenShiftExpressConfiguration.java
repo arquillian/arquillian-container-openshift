@@ -179,18 +179,23 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
         }
     }
 
+    public String getHostName() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(application).append("-").append(namespace).append(".").append(libraDomain);
+        return sb.toString();
+    }
+
     private URL constructRootContext() throws MalformedURLException {
 
         StringBuilder sb = new StringBuilder("http://");
-        sb.append(application).append("-").append(namespace).append(".").append(libraDomain);
+        sb.append(getHostName());
 
         return new URL(sb.toString());
     }
 
     private URI constructRemoteRepositoryURI() throws URISyntaxException {
         StringBuilder sb = new StringBuilder("ssh://");
-        sb.append(sshUserName).append("@").append(application).append("-").append(namespace).append(".").append(libraDomain)
-                .append("/~/git/").append(application).append(".git/");
+        sb.append(sshUserName).append("@").append(getHostName()).append("/~/git/").append(application).append(".git/");
 
         return new URI(sb.toString());
     }

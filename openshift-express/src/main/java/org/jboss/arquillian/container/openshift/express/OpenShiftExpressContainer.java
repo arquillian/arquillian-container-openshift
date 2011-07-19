@@ -19,9 +19,6 @@ package org.jboss.arquillian.container.openshift.express;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
@@ -42,11 +39,7 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptor;
  *
  */
 public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftExpressConfiguration> {
-    private static Logger log = Logger.getLogger(OpenShiftExpressContainer.class.getName());
-
     private OpenShiftExpressConfiguration configuration;
-
-    private final List<String> failedUndeployments = new ArrayList<String>();
 
     @Inject
     @ContainerScoped
@@ -54,7 +47,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
     @Override
     public ProtocolDescription getDefaultProtocol() {
-        return new ProtocolDescription("Local");
+        return new ProtocolDescription("Servlet 3.0");
     }
 
     @Override
@@ -100,7 +93,9 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
         InputStream is = archive.as(ZipExporter.class).exportAsInputStream();
         repo.addAndPush(archive.getName(), is);
 
-        return new ProtocolMetaData();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        return parser.parse(archive);
     }
 
     @Override

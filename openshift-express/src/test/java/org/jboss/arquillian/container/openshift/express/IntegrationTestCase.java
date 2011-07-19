@@ -1,7 +1,8 @@
 /*
  * JBoss, Home of Professional Open Source
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * by the @authors tag. See the copyright.txt in the distribution for a
+ * Copyright 2011 Red Hat Inc. and/or its affiliates and other contributors
+ * as indicated by the @authors tag. All rights reserved.
+ * See the copyright.txt in the distribution for a
  * full listing of individual contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,45 +17,40 @@
  */
 package org.jboss.arquillian.container.openshift.express;
 
-import javax.ejb.EJB;
+import javax.inject.Inject;
 
-import org.jboss.arquillian.container.jbossas.managed_6.ejb.MyEjb;
+import org.jboss.arquillian.container.openshift.express.archive.GreetingService;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * JBossEmbeddedIntegrationTestCase
+ * IntegrationTestCase
  *
  * @author <a href="mailto:aslak@redhat.com">Aslak Knutsen</a>
  * @version $Revision: $
  */
 @RunWith(Arquillian.class)
-public class JBossASIntegrationOld
-{
-   @Deployment
-   public static JavaArchive createDeployment() throws Exception 
-   {
-      return ShrinkWrap.create(JavaArchive.class, "test.jar")
-               .addClasses(
-                     JBossASIntegrationOld.class,
-                     MyEjb.class);
-   }
-   
-   @EJB
-   private MyEjb instanceVariable;
-   
-   @Test
-   public void shouldBeAbleToInjectEJBAsInstanceVariable() throws Exception 
-   {
-      Assert.assertNotNull(
-            "Verify that the Bean has been injected",
-            instanceVariable);
-      
-      Assert.assertEquals("aslak", instanceVariable.getName());
-   }
+public class IntegrationTestCase {
+
+    @Deployment
+    public static JavaArchive create() {
+        final JavaArchive archive = ShrinkWrap.create(JavaArchive.class).addClass(GreetingService.class);
+        archive.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
+        return archive;
+    }
+
+    @Inject
+    private GreetingService service;
+
+    @Test
+    public void shouldBeAbleToInject() throws Exception {
+        Assert.assertNotNull(service);
+        Assert.assertEquals("Hello Earthling!", service.greet("Earthling"));
+    }
 }

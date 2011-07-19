@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
@@ -59,7 +60,9 @@ public class OpenShiftRepository {
             throw new IllegalStateException("Unable to copy context to the Git repository", e);
         }
 
-        log.info("Copied " + path + " to the repository");
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Copied " + path + " to the local repository");
+        }
 
         AddCommand add = git.add();
         DirCache cache;
@@ -72,13 +75,21 @@ public class OpenShiftRepository {
             throw new IllegalStateException("Unable to add file to the Git cache", e);
         }
 
-        log.info("Stored " + path + " to the repository at " + asFilePattern(path));
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Stored " + path + " to the local repository at " + asFilePattern(path));
+        }
 
         commit("Preparing " + path + " for OpenShift Express Deployment");
-        log.info("Commited " + path + " to the repository");
+
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Commited " + path + " to the repository");
+        }
 
         push();
-        log.info("Pushed " + path + " to the remote repository at " + configuration.getRemoteRepositoryUri());
+
+        if (log.isLoggable(Level.INFO)) {
+            log.info("Pushed " + path + " to the remote repository " + configuration.getRemoteRepositoryUri());
+        }
 
         return this;
     }
@@ -96,13 +107,19 @@ public class OpenShiftRepository {
             throw new IllegalStateException("Unable to remove file from the Git cache", e);
         }
 
-        log.info("Removed " + path + " frome the repository");
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Removed " + path + " from local the repository");
+        }
 
         commit("Removing " + path + " Arquillian OpenShift Express Deployment");
-        log.info("Commited " + path + " removal from the repository");
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Commited " + path + " removal to the local repository");
+        }
 
         push();
-        log.info("Pushed " + path + " to the remote repository at " + configuration.getRemoteRepositoryUri());
+        if (log.isLoggable(Level.INFO)) {
+            log.info("Pushed removal of " + path + " to the remote repository " + configuration.getRemoteRepositoryUri());
+        }
 
         return this;
     }
@@ -179,17 +196,21 @@ public class OpenShiftRepository {
         this.repository = File.createTempFile("arq-openshift", "express");
         repository.delete();
         repository.mkdirs();
-        // repository.deleteOnExit();
+        repository.deleteOnExit();
 
-        log.info("Preparing to clone " + configuration.getRemoteRepositoryUri() + " to " + repository.getAbsolutePath());
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Preparing to clone " + configuration.getRemoteRepositoryUri() + " to " + repository.getAbsolutePath());
+        }
 
         CloneCommand cloneCmd = Git.cloneRepository();
         cloneCmd.setDirectory(repository).setURI(configuration.getRemoteRepositoryUri());
 
         this.git = cloneCmd.call();
 
-        log.info("Cloned remote repository from " + configuration.getRemoteRepositoryUri() + " to "
-                + repository.getAbsolutePath());
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Cloned remote repository from " + configuration.getRemoteRepositoryUri() + " to "
+                    + repository.getAbsolutePath());
+        }
 
         this.identification = new PersonIdent("Arquillian OpenShift Express", "arquillian@jboss.org");
 
