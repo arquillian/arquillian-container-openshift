@@ -65,6 +65,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
 
     private String sshUserName;
 
+    private CartridgeType cartridgeType;
+
     /*
      * (non-Javadoc)
      *
@@ -84,6 +86,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
         Validate.notNullOrEmpty(type,
                 "OpenShift Express Cartridge Type must be specified, please fill in \"libraDomain\" property in Arquillian configuration");
 
+        this.cartridgeType = CartridgeType.typeOf(type);
+
         // construct compound values and validate them
         getRemoteRepositoryUri();
         getRootContextUrl();
@@ -101,6 +105,21 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
      */
     public void setType(String type) {
         this.type = type;
+        this.setCartridgeType(CartridgeType.typeOf(type));
+    }
+
+    /**
+     * @param cartridgeType the cartridgeType to set
+     */
+    public void setCartridgeType(CartridgeType cartridgeType) {
+        this.cartridgeType = cartridgeType;
+    }
+
+    /**
+     * @return the cartridgeType
+     */
+    public CartridgeType getCartridgeType() {
+        return cartridgeType;
     }
 
     /**

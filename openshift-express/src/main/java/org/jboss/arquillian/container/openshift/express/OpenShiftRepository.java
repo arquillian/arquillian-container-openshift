@@ -263,13 +263,6 @@ public class OpenShiftRepository {
     private String asFilePattern(String path) {
         StringBuilder sb = new StringBuilder();
 
-        // type specific path
-        if ("jbossas-7.0".equals(configuration.getType())) {
-            sb.append("deployments/");
-        } else {
-            sb.append("/");
-        }
-
-        return sb.append(path).toString();
+        return sb.append(configuration.getCartridgeType().getDeploymentDir()).append(path).toString();
     }
 }
