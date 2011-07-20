@@ -1,3 +1,19 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011, Red Hat Middleware LLC, and individual contributors
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jboss.arquillian.container.openshift.express;
 
 import java.io.File;
@@ -27,7 +43,7 @@ import org.eclipse.jgit.errors.UnmergedPathException;
 import org.eclipse.jgit.lib.PersonIdent;
 
 /**
- * Abstraction of a Git repository
+ * Abstraction of a Git repository for OpenShift.
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  *
@@ -40,6 +56,12 @@ public class OpenShiftRepository {
     private Git git;
     private PersonIdent identification;
 
+    /**
+     * Connects to remote repository and clones it to a temporary location on local file system. Determines deployments
+     * directory based on cartridge type.
+     *
+     * @param configuration the configuration
+     */
     public OpenShiftRepository(OpenShiftExpressConfiguration configuration) {
 
         this.configuration = configuration;
@@ -52,6 +74,15 @@ public class OpenShiftRepository {
 
     }
 
+    /**
+     * Adds, commits and pushes upstream context under given path in the deployments directory which is scanned by OpenShift
+     * Express instance
+     *
+     *
+     * @param path Path representing file name under deployments directory
+     * @param content the context to be stored
+     * @return Modified repository
+     */
     public OpenShiftRepository addAndPush(String path, InputStream content) {
 
         try {
@@ -94,6 +125,12 @@ public class OpenShiftRepository {
         return this;
     }
 
+    /**
+     * Removes, commits and pushes upstream under given path in deployments directory
+     *
+     * @param path Path representing file name under deployments directory
+     * @return Modified repository
+     */
     public OpenShiftRepository removeAndPush(String path) {
         RmCommand remove = git.rm();
 
@@ -124,6 +161,7 @@ public class OpenShiftRepository {
         return this;
     }
 
+    // commit
     private OpenShiftRepository commit(String message) {
         CommitCommand commit = git.commit();
         commit.setAuthor(identification);
@@ -148,6 +186,7 @@ public class OpenShiftRepository {
         return this;
     }
 
+    // push
     private OpenShiftRepository push() {
         PushCommand push = git.push();
         try {

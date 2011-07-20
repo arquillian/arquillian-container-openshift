@@ -19,6 +19,8 @@ package org.jboss.arquillian.container.openshift.express;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
@@ -33,13 +35,22 @@ import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
 
 /**
- * OpenShift Express container
+ * OpenShift Express container. Deploys application or descriptor to an existing OpenShift instance. This instance must be
+ * created before the test itself.
+ *
+ * The Git repository must be enabled to use binary deployments only.
+ *
+ * <p>
+ * See {@link OpenShiftExpressConfiguration} for required configuration
+ * </p>
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  *
  */
 public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftExpressConfiguration> {
     private OpenShiftExpressConfiguration configuration;
+
+    private static final Logger log = Logger.getLogger(OpenShiftExpressContainer.class.getName());
 
     @Inject
     @ContainerScoped
@@ -63,7 +74,16 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
     @Override
     public void start() throws LifecycleException {
         // initialize repository
+        long beforeInit = 0;
+        if (log.isLoggable(Level.FINE)) {
+            beforeInit = System.currentTimeMillis();
+        }
+
         this.repository.set(new OpenShiftRepository(configuration));
+
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Git repository initialization took " + (System.currentTimeMillis() - beforeInit) + "ms");
+        }
     }
 
     @Override
@@ -73,36 +93,72 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
     @Override
     public void deploy(Descriptor descriptor) throws DeploymentException {
-        OpenShiftRepository repo = repository.get();
 
+        long beforeDeploy = 0;
+        if (log.isLoggable(Level.FINE)) {
+            beforeDeploy = System.currentTimeMillis();
+        }
+
+        OpenShiftRepository repo = repository.get();
         InputStream is = new ByteArrayInputStream(descriptor.getDescriptorName().getBytes(Charset.defaultCharset()));
         repo.addAndPush(descriptor.getDescriptorName(), is);
+
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Deployment of " + descriptor.getDescriptorName() + " took " + (System.currentTimeMillis() - beforeDeploy)
+                    + "ms");
+        }
     }
 
     @Override
     public void undeploy(Descriptor descriptor) throws DeploymentException {
-        OpenShiftRepository repo = repository.get();
 
+        long beforeUnDeploy = 0;
+        if (log.isLoggable(Level.FINE)) {
+            beforeUnDeploy = System.currentTimeMillis();
+        }
+
+        OpenShiftRepository repo = repository.get();
         repo.removeAndPush(descriptor.getDescriptorName());
+
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Undeployment of " + descriptor.getDescriptorName() + " took "
+                    + (System.currentTimeMillis() - beforeUnDeploy) + "ms");
+        }
     }
 
     @Override
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
-        OpenShiftRepository repo = repository.get();
 
+        long beforeDeploy = 0;
+        if (log.isLoggable(Level.FINE)) {
+            beforeDeploy = System.currentTimeMillis();
+        }
+
+        OpenShiftRepository repo = repository.get();
         InputStream is = archive.as(ZipExporter.class).exportAsInputStream();
         repo.addAndPush(archive.getName(), is);
 
-        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Deployment of " + archive.getName() + " took " + (System.currentTimeMillis() - beforeDeploy) + "ms");
+        }
 
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
         return parser.parse(archive);
     }
 
     @Override
     public void undeploy(Archive<?> archive) throws DeploymentException {
+
+        long beforeUnDeploy = 0;
+        if (log.isLoggable(Level.FINE)) {
+            beforeUnDeploy = System.currentTimeMillis();
+        }
+
         OpenShiftRepository repo = repository.get();
-
         repo.removeAndPush(archive.getName());
-    }
 
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Undeployment of " + archive.getName() + " took " + (System.currentTimeMillis() - beforeUnDeploy) + "ms");
+        }
+    }
 }

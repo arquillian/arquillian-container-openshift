@@ -29,6 +29,25 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * A {@link org.jboss.arquillian.container.spi.client.container.ContainerConfiguration} implementation for the OpenShift Express
  * container.
  *
+ * <p>
+ * Following configuration properties are required in order to run:
+ * </p>
+ * <ul>
+ * <li>namespace - a namespace created by rhc-create-domain tool, e.g. bar</li>
+ * <li>application - an application name created by rhc-create-app tool, e.g. foo</li>
+ * <li>login - a Red Hat login (RHN with OpenShift Express access, e.g. bar@redhat.com</li>
+ * <li>sshUserName - an user name generated when an application is created by rhc-create-app tool, e.g.
+ * a7b1daad5c624157bdeea60b26cf8eba
+ * </ul>
+ *
+ * <p>
+ * Following configuration properties have sensible defaults, but can be modified:
+ * </p>
+ * <ul>
+ * <li>type - cartridge type, e.g. jbossas-7.0</li>
+ * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcould.com</li>
+ * </ul>
+ *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  * @version $Revision: $
  */
