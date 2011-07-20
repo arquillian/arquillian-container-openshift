@@ -57,6 +57,6 @@ public class OpenShiftDroneTestCase {
         browser.open(contextPath);
         browser.waitForPageToLoad();
 
-        Assert.assertTrue(browser.isElementPresent(ARQUILLIAN));
+        Assert.assertTrue("Arquillian page is visible in browser", browser.isElementPresent(ARQUILLIAN));
     }
 }
