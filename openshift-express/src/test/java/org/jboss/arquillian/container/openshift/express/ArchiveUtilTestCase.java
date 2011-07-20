@@ -10,6 +10,7 @@ import org.jboss.arquillian.container.openshift.express.servlet.Servlet1;
 import org.jboss.arquillian.container.openshift.express.servlet.Servlet2;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 
@@ -42,7 +43,7 @@ public class ArchiveUtilTestCase {
     public void testEarContent() {
         Collection<String> classes = ArchiveUtil.getDefinedClasses(createEarDeployment());
 
-        Assert.assertEquals("There are two classes in the archive", 2, classes.size());
+        Assert.assertEquals("There are three classes in the archive", 3, classes.size());
     }
 
     @Test
@@ -55,7 +56,8 @@ public class ArchiveUtilTestCase {
     private EnterpriseArchive createEarDeployment() {
         return ShrinkWrap.create(EnterpriseArchive.class)
                 .addAsModule(ShrinkWrap.create(WebArchive.class).addClass(Servlet1.class))
-                .addAsModule(ShrinkWrap.create(WebArchive.class).addClass(Servlet2.class));
+                .addAsModule(ShrinkWrap.create(WebArchive.class).addClass(Servlet2.class))
+                .addAsModule(ShrinkWrap.create(JavaArchive.class).addClass(Object.class));
     }
 
     private WebArchive createWarDeployment1() {

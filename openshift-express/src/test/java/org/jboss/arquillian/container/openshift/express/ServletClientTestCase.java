@@ -71,11 +71,11 @@ public class ServletClientTestCase {
             @ArquillianResource(Servlet1.class) URL servlet1BaseURL,
             @ArquillianResource(Servlet2.class) URL servlet2BaseURL) throws Exception {
 
-        Assert.assertNotNull("Should have injected Base URL for deployed WebContext",
+        Assert.assertNotNull("Servlet1: Should have injected Base URL for deployed WebContext",
                 servlet1BaseURL);
         Assert.assertEquals(Servlet1.class.getName(), getContent(new URL(servlet1BaseURL, Servlet1.PATTERN)));
 
-        Assert.assertNotNull("Should have injected Base URL for deployed WebContext",
+        Assert.assertNotNull("Servlet2: Should have injected Base URL for deployed WebContext",
                 servlet2BaseURL);
         Assert.assertEquals(Servlet2.class.getName(), getContent(new URL(servlet2BaseURL, Servlet2.PATTERN)));
     }
