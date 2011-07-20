@@ -45,7 +45,7 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * </p>
  * <ul>
  * <li>type - cartridge type, e.g. jbossas-7.0</li>
- * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcould.com</li>
+ * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcloud.com</li>
  * </ul>
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
