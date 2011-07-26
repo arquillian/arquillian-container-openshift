@@ -41,6 +41,7 @@ import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.errors.UnmergedPathException;
 import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.transport.CredentialsProvider;
 
 /**
  * Abstraction of a Git repository for OpenShift.
@@ -52,6 +53,7 @@ public class OpenShiftRepository {
     private static Logger log = Logger.getLogger(OpenShiftRepository.class.getName());
 
     private OpenShiftExpressConfiguration configuration;
+    private CredentialsProvider credentialsProvider;
     private File repository;
     private Git git;
     private PersonIdent identification;
@@ -62,9 +64,10 @@ public class OpenShiftRepository {
      *
      * @param configuration the configuration
      */
-    public OpenShiftRepository(OpenShiftExpressConfiguration configuration) {
+    public OpenShiftRepository(OpenShiftExpressConfiguration configuration, CredentialsProvider credentialsProvider) {
 
         this.configuration = configuration;
+        this.credentialsProvider = credentialsProvider;
 
         try {
             initialize();
@@ -189,6 +192,7 @@ public class OpenShiftRepository {
     // push
     private OpenShiftRepository push() {
         PushCommand push = git.push();
+        push.setCredentialsProvider(credentialsProvider);
         try {
             push.call();
         } catch (JGitInternalException e) {
@@ -243,6 +247,7 @@ public class OpenShiftRepository {
 
         CloneCommand cloneCmd = Git.cloneRepository();
         cloneCmd.setDirectory(repository).setURI(configuration.getRemoteRepositoryUri());
+        cloneCmd.setCredentialsProvider(credentialsProvider);
 
         this.git = cloneCmd.call();
 

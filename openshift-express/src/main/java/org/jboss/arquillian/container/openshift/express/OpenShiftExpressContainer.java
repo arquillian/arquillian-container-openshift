@@ -22,14 +22,17 @@ import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.jgit.transport.CredentialsProvider;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.context.annotation.ContainerScoped;
+import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.InstanceProducer;
 import org.jboss.arquillian.core.api.annotation.Inject;
+import org.jboss.arquillian.core.spi.ServiceLoader;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
@@ -48,13 +51,20 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptor;
  *
  */
 public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftExpressConfiguration> {
-    private OpenShiftExpressConfiguration configuration;
-
     private static final Logger log = Logger.getLogger(OpenShiftExpressContainer.class.getName());
 
     @Inject
     @ContainerScoped
     private InstanceProducer<OpenShiftRepository> repository;
+
+    @Inject
+    @ContainerScoped
+    private InstanceProducer<OpenShiftExpressConfiguration> configuration;
+
+    @Inject
+    private Instance<ServiceLoader> serviceLoader;
+
+    private CredentialsProvider credentialsProvider;
 
     @Override
     public ProtocolDescription getDefaultProtocol() {
@@ -68,18 +78,17 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
     @Override
     public void setup(OpenShiftExpressConfiguration configuration) {
-        this.configuration = configuration;
+        this.configuration.set(configuration);
+        this.credentialsProvider = getCredentialsProvider();
     }
 
     @Override
     public void start() throws LifecycleException {
         // initialize repository
-        long beforeInit = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeInit = System.currentTimeMillis();
-        }
+        long beforeInit = System.currentTimeMillis();
 
-        this.repository.set(new OpenShiftRepository(configuration));
+        OpenShiftExpressConfiguration conf = configuration.get();
+        this.repository.set(new OpenShiftRepository(conf, credentialsProvider));
 
         if (log.isLoggable(Level.FINE)) {
             log.fine("Git repository initialization took " + (System.currentTimeMillis() - beforeInit) + "ms");
@@ -94,10 +103,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
     @Override
     public void deploy(Descriptor descriptor) throws DeploymentException {
 
-        long beforeDeploy = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeDeploy = System.currentTimeMillis();
-        }
+        long beforeDeploy = System.currentTimeMillis();
 
         OpenShiftRepository repo = repository.get();
         InputStream is = new ByteArrayInputStream(descriptor.getDescriptorName().getBytes(Charset.defaultCharset()));
@@ -112,10 +118,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
     @Override
     public void undeploy(Descriptor descriptor) throws DeploymentException {
 
-        long beforeUnDeploy = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeUnDeploy = System.currentTimeMillis();
-        }
+        long beforeUnDeploy = System.currentTimeMillis();
 
         OpenShiftRepository repo = repository.get();
         repo.removeAndPush(descriptor.getDescriptorName());
@@ -129,10 +132,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
     @Override
     public ProtocolMetaData deploy(Archive<?> archive) throws DeploymentException {
 
-        long beforeDeploy = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeDeploy = System.currentTimeMillis();
-        }
+        long beforeDeploy = System.currentTimeMillis();
 
         OpenShiftRepository repo = repository.get();
         InputStream is = archive.as(ZipExporter.class).exportAsInputStream();
@@ -142,17 +142,15 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
             log.fine("Deployment of " + archive.getName() + " took " + (System.currentTimeMillis() - beforeDeploy) + "ms");
         }
 
-        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+        OpenShiftExpressConfiguration conf = configuration.get();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(conf);
         return parser.parse(archive);
     }
 
     @Override
     public void undeploy(Archive<?> archive) throws DeploymentException {
 
-        long beforeUnDeploy = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeUnDeploy = System.currentTimeMillis();
-        }
+        long beforeUnDeploy = System.currentTimeMillis();
 
         OpenShiftRepository repo = repository.get();
         repo.removeAndPush(archive.getName());
@@ -160,5 +158,17 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
         if (log.isLoggable(Level.FINE)) {
             log.fine("Undeployment of " + archive.getName() + " took " + (System.currentTimeMillis() - beforeUnDeploy) + "ms");
         }
+    }
+
+    /**
+     * Returns a credentials provider for OpenShift Express. If no implementation is found, it returns a configuration based
+     * one.
+     *
+     * @return the credentials provider
+     */
+    private CredentialsProvider getCredentialsProvider() {
+        // get the credentials provider
+        ServiceLoader service = serviceLoader.get();
+        return service.onlyOne(CredentialsProvider.class);
     }
 }

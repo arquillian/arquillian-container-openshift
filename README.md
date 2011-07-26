@@ -27,4 +27,8 @@ Following configuration properties have sensible defaults, but can be modified:
 * _type_ - cartridge type, e.g. jbossas-7.0
 * _libraDomain_ - domain where OpenShift server instance is running, e.g. rhcloud.com
 
+Following configuration properties are optional
+
+* _passphrase_ - the passphrase to SSH key, can be set via SSH_PASSPHRASE environment variable
+
 Note: For jbossas-7.0 cartridge automatic deployment must be disabled

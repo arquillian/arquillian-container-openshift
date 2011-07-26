@@ -48,6 +48,13 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcloud.com</li>
  * </ul>
  *
+ * <p>
+ * Following configuration properties are optional
+ * </p>
+ * <ul>
+ * <li>passphrase - the passphrase to SSH key, can be set via SSH_PASSPHRASE environment variable</li>
+ * </ul>
+ *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  * @version $Revision: $
  */
@@ -66,6 +73,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
     private String sshUserName;
 
     private CartridgeType cartridgeType;
+
+    private String passphrase = System.getenv("SSH_PASSPHRASE");
 
     /*
      * (non-Javadoc)
@@ -221,6 +230,20 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
         StringBuilder sb = new StringBuilder();
         sb.append(application).append("-").append(namespace).append(".").append(libraDomain);
         return sb.toString();
+    }
+
+    /**
+     * @param passphrase the passphrase to set
+     */
+    public void setPassphrase(String passphrase) {
+        this.passphrase = passphrase;
+    }
+
+    /**
+     * @return the passphrase
+     */
+    public String getPassphrase() {
+        return passphrase;
     }
 
     private URL constructRootContext() throws MalformedURLException {

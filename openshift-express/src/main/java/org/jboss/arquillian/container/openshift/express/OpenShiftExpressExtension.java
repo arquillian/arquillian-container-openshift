@@ -17,6 +17,8 @@
  */
 package org.jboss.arquillian.container.openshift.express;
 
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.jboss.arquillian.container.openshift.express.auth.ArquillianConfigurationCredentialsProvider;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentExceptionTransformer;
 import org.jboss.arquillian.core.spi.LoadableExtension;
@@ -32,6 +34,6 @@ public class OpenShiftExpressExtension implements LoadableExtension {
     public void register(ExtensionBuilder builder) {
         builder.service(DeployableContainer.class, OpenShiftExpressContainer.class);
         builder.service(DeploymentExceptionTransformer.class, ExceptionTransformer.class);
-
+        builder.service(CredentialsProvider.class, ArquillianConfigurationCredentialsProvider.class);
     }
 }
