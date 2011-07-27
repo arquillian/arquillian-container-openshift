@@ -19,7 +19,7 @@ package org.jboss.arquillian.container.openshift.express;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.io.IOUtils;
+import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.Node;
@@ -79,7 +79,7 @@ class ByteAssetClassLoader extends ClassLoader {
     private byte[] getBytesFromAsset(Asset asset) throws IOException {
         InputStream is = asset.openStream();
         byte[] bytes = IOUtils.toByteArray(is);
-        is.close();
+        IOUtils.closeQuietly(is);
         return bytes;
     }
 

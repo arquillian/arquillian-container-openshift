@@ -67,13 +67,6 @@
             <version>1.0.0.201106090707-r</version>
         </dependency>
 
-        <!-- File utilities -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>1.4</version>
-        </dependency>
-
         <!-- Testing -->
         <dependency>
             <groupId>org.jboss.ejb3</groupId>

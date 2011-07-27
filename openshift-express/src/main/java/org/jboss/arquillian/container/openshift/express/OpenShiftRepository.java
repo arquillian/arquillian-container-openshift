@@ -24,7 +24,6 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -42,6 +41,7 @@ import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.errors.UnmergedPathException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 
 /**
  * Abstraction of a Git repository for OpenShift.
@@ -223,16 +223,8 @@ public class OpenShiftRepository {
         OutputStream output = new FileOutputStream(content);
         IOUtils.copy(input, output);
 
-        try {
-            input.close();
-        } catch (IOException e) {
-            log.warning("Could not close input for " + path + ", cause: " + e.getMessage());
-        }
-        try {
-            output.close();
-        } catch (IOException e) {
-            log.warning("Could not close input for " + path + ", cause: " + e.getMessage());
-        }
+        IOUtils.closeQuietly(input);
+        IOUtils.closeQuietly(output);
     }
 
     private void initialize() throws IOException {
