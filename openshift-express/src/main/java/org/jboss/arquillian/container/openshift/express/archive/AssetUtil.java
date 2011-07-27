@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.container.openshift.express;
+package org.jboss.arquillian.container.openshift.express.archive;
 
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.Filter;
@@ -25,12 +25,12 @@ import org.jboss.shrinkwrap.api.Filter;
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  *
  */
-class AssetUtil {
+public class AssetUtil {
 
     /**
      * Filter for getting EAR archives from an archive
      */
-    static final Filter<ArchivePath> EAR_FILTER = new Filter<ArchivePath>() {
+    public static final Filter<ArchivePath> EAR_FILTER = new Filter<ArchivePath>() {
 
         @Override
         public boolean include(ArchivePath object) {
@@ -41,7 +41,7 @@ class AssetUtil {
     /**
      * Filter for getting WAR archives from an archive
      */
-    static final Filter<ArchivePath> WAR_FILTER = new Filter<ArchivePath>() {
+    public static final Filter<ArchivePath> WAR_FILTER = new Filter<ArchivePath>() {
 
         @Override
         public boolean include(ArchivePath object) {
@@ -52,7 +52,7 @@ class AssetUtil {
     /**
      * Filter for getting JAR archives from an archive
      */
-    static final Filter<ArchivePath> JAR_FILTER = new Filter<ArchivePath>() {
+    public static final Filter<ArchivePath> JAR_FILTER = new Filter<ArchivePath>() {
 
         @Override
         public boolean include(ArchivePath object) {

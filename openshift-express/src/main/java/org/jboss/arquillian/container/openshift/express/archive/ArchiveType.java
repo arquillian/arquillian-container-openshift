@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.container.openshift.express;
+package org.jboss.arquillian.container.openshift.express.archive;
 
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
@@ -29,7 +29,7 @@ import org.jboss.shrinkwrap.api.ArchivePaths;
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  *
  */
-enum ArchiveType {
+public enum ArchiveType {
     JAR {
         @Override
         public String asClassName(ArchivePath path) {

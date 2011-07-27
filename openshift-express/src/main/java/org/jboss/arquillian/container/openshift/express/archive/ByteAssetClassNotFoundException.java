@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.container.openshift.express;
+package org.jboss.arquillian.container.openshift.express.archive;
 
 /**
  * A special exception to signalize that {@link ClassNotFoundException} was thrown due to problem in archive processing

@@ -16,17 +16,14 @@
  */
 package org.jboss.arquillian.container.openshift.express;
 
-import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.annotation.WebServlet;
-
+import org.jboss.arquillian.container.openshift.express.archive.ArchiveUtil;
+import org.jboss.arquillian.container.openshift.express.archive.AssetUtil;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
-import org.jboss.arquillian.protocol.servlet.ServletMethodExecutor;
-import org.jboss.arquillian.protocol.servlet.runner.ServletTestRunner;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -99,38 +96,15 @@ public class ProtocolMetaDataParser {
 
     private void extractWebContext(HTTPContext context, String deploymentName, WebArchive deployment) {
 
-        Collection<Class<javax.servlet.Servlet>> servlets = ArchiveUtil.getDefinedClassesOf(deployment,
-                javax.servlet.Servlet.class);
-
-        for (Class<javax.servlet.Servlet> servlet : servlets) {
-            context.add(new Servlet(getServletName(servlet), toContextName(deploymentName)));
+        for (String servletName : ServletUtils.getServletNames(deployment)) {
+            context.add(new Servlet(servletName, toContextName(deploymentName)));
 
             if (log.isLoggable(Level.FINE)) {
-                log.fine("Context " + context.getHost() + " enriched with " + getServletName(servlet) + " at "
+                log.fine("Context " + context.getHost() + " enriched with " + servletName + " at "
                         + toContextName(deploymentName));
             }
         }
 
-    }
-
-    private String getServletName(Class<javax.servlet.Servlet> clazz) {
-
-        // FIXME scan for web.xml
-        if (clazz.isAnnotationPresent(WebServlet.class)) {
-            WebServlet servlet = clazz.getAnnotation(WebServlet.class);
-            String name = servlet.name();
-            if (name != null && name.length() != 0) {
-                return name;
-            }
-        }
-
-        String className = clazz.getSimpleName();
-        // Arquillian Servlet Name hook
-        if (ServletTestRunner.class.getSimpleName().equals(className)) {
-            return ServletMethodExecutor.ARQUILLIAN_SERVLET_NAME;
-        }
-
-        return className;
     }
 
     private String toContextName(String deploymentName) {

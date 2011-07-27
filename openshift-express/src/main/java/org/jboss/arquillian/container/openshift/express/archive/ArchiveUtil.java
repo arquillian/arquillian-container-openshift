@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jboss.arquillian.container.openshift.express;
+package org.jboss.arquillian.container.openshift.express.archive;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -47,8 +47,38 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  *
  */
-class ArchiveUtil {
+public class ArchiveUtil {
     private static final Logger log = Logger.getLogger(ArchiveUtil.class.getName());
+
+    /**
+     * Checks if archive is of type JAR
+     *
+     * @param archive the archive
+     * @return {@code true} if archive is JAR, {@code false} otherwise
+     */
+    public static final boolean isJarArchive(Archive<?> archive) {
+        return archive instanceof JavaArchive;
+    }
+
+    /**
+     * Checks if archive is of type WAR
+     *
+     * @param archive the archive
+     * @return {@code true} if archive is WAR, {@code false} otherwise
+     */
+    public static final boolean isWarArchive(Archive<?> archive) {
+        return archive instanceof WebArchive;
+    }
+
+    /**
+     * Checks if archive is of type EAR
+     *
+     * @param archive the archive
+     * @return {@code true} if archive is EAR, {@code false} otherwise
+     */
+    public static final boolean isEarArchive(Archive<?> archive) {
+        return archive instanceof EnterpriseArchive;
+    }
 
     /**
      * Gets all classes from the archive which implement interface or are the subclass of given needle
@@ -58,12 +88,9 @@ class ArchiveUtil {
      * @param needle Class representing superclass of searched objects
      * @return Unique collection of classes in the archive
      */
-    static final <T> Collection<Class<T>> getDefinedClassesOf(Archive<?> archive, Class<T> needle) {
+    public static final <T> Collection<Class<T>> getDefinedClassesOf(Archive<?> archive, Class<T> needle) {
 
-        long beforeScanning = 0;
-        if (log.isLoggable(Level.FINE)) {
-            beforeScanning = System.currentTimeMillis();
-        }
+        long beforeScanning = System.currentTimeMillis();
 
         Collection<String> classNames = new LinkedHashSet<String>();
         Collection<Class<T>> needleImpls = new LinkedHashSet<Class<T>>();
@@ -84,7 +111,7 @@ class ArchiveUtil {
      * @param archive Archive to be searched
      * @return Unique collection of class names in the archive
      */
-    static final Collection<String> getDefinedClasses(Archive<?> archive) {
+    public static final Collection<String> getDefinedClasses(Archive<?> archive) {
 
         Collection<String> classNames = new LinkedHashSet<String>();
         getDefinedClasses(classNames, null, archive, null);
@@ -166,33 +193,4 @@ class ArchiveUtil {
 
     }
 
-    /**
-     * Checks if archive is of type JAR
-     *
-     * @param archive the archive
-     * @return {@code true} if archive is JAR, {@code false} otherwise
-     */
-    static final boolean isJarArchive(Archive<?> archive) {
-        return archive instanceof JavaArchive;
-    }
-
-    /**
-     * Checks if archive is of type WAR
-     *
-     * @param archive the archive
-     * @return {@code true} if archive is WAR, {@code false} otherwise
-     */
-    static final boolean isWarArchive(Archive<?> archive) {
-        return archive instanceof WebArchive;
-    }
-
-    /**
-     * Checks if archive is of type EAR
-     *
-     * @param archive the archive
-     * @return {@code true} if archive is EAR, {@code false} otherwise
-     */
-    static final boolean isEarArchive(Archive<?> archive) {
-        return archive instanceof EnterpriseArchive;
-    }
 }

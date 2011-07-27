@@ -22,6 +22,7 @@ import javax.servlet.Servlet;
 
 import junit.framework.Assert;
 
+import org.jboss.arquillian.container.openshift.express.archive.ArchiveUtil;
 import org.jboss.arquillian.container.openshift.express.servlet.Servlet1;
 import org.jboss.arquillian.container.openshift.express.servlet.Servlet2;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
