@@ -111,13 +111,6 @@
         </dependency>
     </dependencies>
 
-    <repositories>
-        <repository>
-            <id>jgit-repository</id>
-            <url>http://download.eclipse.org/jgit/maven</url>
-        </repository>
-    </repositories>
-
     <build>
         <plugins>
             <plugin>
