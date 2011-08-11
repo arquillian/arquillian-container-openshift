@@ -39,7 +39,6 @@ import org.junit.runner.RunWith;
  * @version $Revision: $
  */
 @RunWith(Arquillian.class)
-@RunAsClient
 public class OpenShiftDroneTestCase {
 
     @Drone
@@ -47,7 +46,7 @@ public class OpenShiftDroneTestCase {
 
     private static final IdLocator ARQUILLIAN = Ajocado.id("arquillian.info");
 
-    @Deployment
+    @Deployment(testable = false)
     public static WebArchive createDeployment() {
         return ShrinkWrap.create(WebArchive.class, "arquillian.war").addAsDirectories("images")
                 .addAsWebResource("test.war/health.jsp", "health.jsp").addAsWebResource("test.war/index.html", "index.html")

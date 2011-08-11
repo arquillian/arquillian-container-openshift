@@ -31,4 +31,8 @@ Following configuration properties are optional
 
 * _passphrase_ - the passphrase to SSH key, can be set via SSH_PASSPHRASE environment variable
 
-Note: For jbossas-7.0 cartridge automatic deployment must be disabled
+For jbossas-7.0 cartridge automatic deployment is disabled during execution of the tests. This means your application
+built from pom.xml is not available during testing. A workaround is to use a different application name 
+and repository for testing.
+
+Note: Requires Maven Surefire plugin 2.9 or higher, because of [SUREFIRE-743](http://jira.codehaus.org/browse/SUREFIRE-743)

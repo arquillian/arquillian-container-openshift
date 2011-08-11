@@ -37,22 +37,62 @@ import org.junit.Test;
 public class ProtocolMetadataParserTestCase {
 
     @Test
-    public void testServletsInEAR() {
+    public void testServletsInEar() {
 
         OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
         ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
 
-        ProtocolMetaData data = parser.parse(sampleEAR());
+        ProtocolMetaData data = parser.parse(sampleEar());
+
+        HTTPContext context = data.getContext(HTTPContext.class);
+        Assert.assertNotNull(context.getServletByName("Servlet1"));
+
+        String contextRoot = context.getServletByName("Servlet1").getContextRoot();
+        Assert.assertEquals("Context root of arquillian1.war is set correctly", "/arquillian1", contextRoot);
+    }
+
+    @Test
+    public void testServletsInWar() {
+
+        OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        ProtocolMetaData data = parser.parse(sampleWar());
 
         HTTPContext context = data.getContext(HTTPContext.class);
 
         Assert.assertNotNull(context.getServletByName("Servlet1"));
 
+        String contextRoot = context.getServletByName("Servlet1").getContextRoot();
+        Assert.assertEquals("Context root of ROOT.war is set correctly", "/", contextRoot);
     }
 
-    private EnterpriseArchive sampleEAR() {
-        return ShrinkWrap.create(EnterpriseArchive.class)
-                .addAsModule(ShrinkWrap.create(WebArchive.class).addClass(Servlet1.class))
-                .addAsModule(ShrinkWrap.create(WebArchive.class).addClasses(Servlet2.class, Servlet3.class));
+    @Test
+    public void testNoServlets() {
+        OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        ProtocolMetaData data = parser.parse(sampleWarNoServlets());
+
+        HTTPContext context = data.getContext(HTTPContext.class);
+
+        Assert.assertNotNull(context.getServletByName("default"));
+        String contextRoot = context.getServletByName("default").getContextRoot();
+        Assert.assertEquals("Context root of arquillian.war is set correctly", "/arquillian", contextRoot);
     }
+
+    private EnterpriseArchive sampleEar() {
+        return ShrinkWrap.create(EnterpriseArchive.class)
+                .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian1.war").addClass(Servlet1.class))
+                .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian2.war").addClasses(Servlet2.class, Servlet3.class));
+    }
+
+    private WebArchive sampleWar() {
+        return ShrinkWrap.create(WebArchive.class, "ROOT.war").addClass(Servlet1.class);
+    }
+
+    private WebArchive sampleWarNoServlets() {
+        return ShrinkWrap.create(WebArchive.class, "arquillian.war").addClass(Object.class);
+    }
+
 }

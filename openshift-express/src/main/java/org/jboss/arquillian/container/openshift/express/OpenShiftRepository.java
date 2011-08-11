@@ -21,27 +21,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CloneCommand;
-import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.PushCommand;
-import org.eclipse.jgit.api.RmCommand;
-import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
-import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
-import org.eclipse.jgit.api.errors.NoFilepatternException;
-import org.eclipse.jgit.api.errors.NoHeadException;
-import org.eclipse.jgit.api.errors.NoMessageException;
-import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.errors.UnmergedPathException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.jboss.arquillian.container.openshift.express.util.GitUtil;
 import org.jboss.arquillian.container.openshift.express.util.IOUtils;
+import org.jboss.arquillian.container.openshift.express.util.MarkingUtil;
 
 /**
  * Abstraction of a Git repository for OpenShift.
@@ -50,13 +41,16 @@ import org.jboss.arquillian.container.openshift.express.util.IOUtils;
  *
  */
 public class OpenShiftRepository {
-    private static Logger log = Logger.getLogger(OpenShiftRepository.class.getName());
+    static Logger log = Logger.getLogger(OpenShiftRepository.class.getName());
 
     private OpenShiftExpressConfiguration configuration;
     private CredentialsProvider credentialsProvider;
-    private File repository;
-    private Git git;
     private PersonIdent identification;
+
+    private GitUtil git;
+    private MarkingUtil markingUtil;
+
+    private Set<String> deployments;
 
     /**
      * Connects to remote repository and clones it to a temporary location on local file system. Determines deployments
@@ -68,6 +62,7 @@ public class OpenShiftRepository {
 
         this.configuration = configuration;
         this.credentialsProvider = credentialsProvider;
+        this.deployments = new LinkedHashSet<String>();
 
         try {
             initialize();
@@ -75,6 +70,37 @@ public class OpenShiftRepository {
             throw new RuntimeException("Unable to initialize temporary Git repository", e);
         }
 
+    }
+
+    /**
+     * @param git the git to set
+     */
+    public void setGitUtil(GitUtil git) {
+        this.git = git;
+    }
+
+    /**
+     * @return the git
+     */
+    public GitUtil getGitUtil() {
+        return git;
+    }
+
+    public OpenShiftRepository markArquillianLifeCycle() {
+        markingUtil.markArquillianLifecycle();
+        git.commit(identification, "Starting Arquillian lifecycle on OpenShift container");
+
+        // no push, push will happen during first deployment
+
+        return this;
+    }
+
+    public OpenShiftRepository unmarkArquillianLifeCycle() {
+        markingUtil.unmarkArquillianLifecycle();
+        git.commit(identification, "Stopping Arquillian lifecycle on OpenShift container");
+        git.push(credentialsProvider);
+
+        return this;
     }
 
     /**
@@ -88,6 +114,7 @@ public class OpenShiftRepository {
      */
     public OpenShiftRepository addAndPush(String path, InputStream content) {
 
+        // store file
         try {
             storeAsFileInRepository(path, content);
         } catch (IOException e) {
@@ -98,28 +125,18 @@ public class OpenShiftRepository {
             log.fine("Copied " + path + " to the local repository");
         }
 
-        AddCommand add = git.add();
-        DirCache cache;
-        try {
-            cache = add.addFilepattern(asFilePattern(path)).call();
-            updateCache(cache);
-        } catch (NoFilepatternException e) {
-            throw new IllegalStateException("Unable to add file to the Git cache", e);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to add file to the Git cache", e);
-        }
+        // add file to repository
+        deployments.add(path);
+        git.add(asFilePattern(path));
+        markingUtil.mark(asFilePattern(path) + ".dodeploy");
 
-        if (log.isLoggable(Level.FINE)) {
-            log.fine("Stored " + path + " to the local repository at " + asFilePattern(path));
-        }
-
-        commit("Preparing " + path + " for OpenShift Express Deployment");
+        git.commit(identification, "Preparing " + path + " for OpenShift Express Deployment");
 
         if (log.isLoggable(Level.FINE)) {
             log.fine("Commited " + path + " to the repository");
         }
 
-        push();
+        git.push(credentialsProvider);
 
         if (log.isLoggable(Level.INFO)) {
             log.info("Pushed " + path + " to the remote repository " + configuration.getRemoteRepositoryUri());
@@ -135,84 +152,23 @@ public class OpenShiftRepository {
      * @return Modified repository
      */
     public OpenShiftRepository removeAndPush(String path) {
-        RmCommand remove = git.rm();
 
-        DirCache cache;
-        try {
-            cache = remove.addFilepattern(asFilePattern(path)).call();
-            updateCache(cache);
-        } catch (NoFilepatternException e) {
-            throw new IllegalStateException("Unable to remove file from the Git cache", e);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to remove file from the Git cache", e);
-        }
+        deployments.remove(path);
+        git.remove(asFilePattern(path));
+        markingUtil.unmark(asFilePattern(path) + ".dodeploy");
+        markingUtil.unmark(asFilePattern(path) + ".deployed");
 
-        if (log.isLoggable(Level.FINE)) {
-            log.fine("Removed " + path + " from local the repository");
-        }
-
-        commit("Removing " + path + " Arquillian OpenShift Express Deployment");
+        git.commit(identification, "Removing " + path + " Arquillian OpenShift Express Deployment");
         if (log.isLoggable(Level.FINE)) {
             log.fine("Commited " + path + " removal to the local repository");
         }
 
-        push();
+        git.push(credentialsProvider);
         if (log.isLoggable(Level.INFO)) {
             log.info("Pushed removal of " + path + " to the remote repository " + configuration.getRemoteRepositoryUri());
         }
 
         return this;
-    }
-
-    // commit
-    private OpenShiftRepository commit(String message) {
-        CommitCommand commit = git.commit();
-        commit.setAuthor(identification);
-        commit.setCommitter(identification);
-        commit.setMessage(message);
-        try {
-            commit.call();
-        } catch (NoHeadException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (NoMessageException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (UnmergedPathException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (ConcurrentRefUpdateException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (JGitInternalException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (WrongRepositoryStateException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
-        }
-
-        return this;
-    }
-
-    // push
-    private OpenShiftRepository push() {
-        PushCommand push = git.push();
-        push.setCredentialsProvider(credentialsProvider);
-        try {
-            push.call();
-        } catch (JGitInternalException e) {
-            throw new IllegalStateException("Unable to push into remote Git repository", e);
-        } catch (InvalidRemoteException e) {
-            throw new IllegalStateException("Unable to push into remote Git repository", e);
-        }
-
-        return this;
-    }
-
-    private void updateCache(DirCache cache) throws IOException {
-        if (!cache.lock()) {
-            throw new IllegalStateException("Unable to lock Git repository cache");
-        }
-        cache.write();
-        if (!cache.commit()) {
-            throw new IllegalStateException("Unable to commit Git repository cache");
-        }
-
     }
 
     private void storeAsFileInRepository(String path, InputStream input) throws IOException {
@@ -228,7 +184,7 @@ public class OpenShiftRepository {
     }
 
     private void initialize() throws IOException {
-        this.repository = File.createTempFile("arq-openshift", "express");
+        File repository = File.createTempFile("arq-openshift", "express");
         repository.delete();
         repository.mkdirs();
         repository.deleteOnExit();
@@ -241,7 +197,8 @@ public class OpenShiftRepository {
         cloneCmd.setDirectory(repository).setURI(configuration.getRemoteRepositoryUri());
         cloneCmd.setCredentialsProvider(credentialsProvider);
 
-        this.git = cloneCmd.call();
+        this.git = new GitUtil(cloneCmd.call());
+        this.markingUtil = new MarkingUtil(git);
 
         if (log.isLoggable(Level.FINE)) {
             log.fine("Cloned remote repository from " + configuration.getRemoteRepositoryUri() + " to "
@@ -253,7 +210,7 @@ public class OpenShiftRepository {
     }
 
     private String asRepositoryPath(String path) {
-        StringBuilder sb = new StringBuilder(repository.getAbsolutePath());
+        StringBuilder sb = new StringBuilder(git.getRepositoryDirectory().getAbsolutePath());
         return sb.append("/").append(asFilePattern(path)).toString();
     }
 
@@ -262,4 +219,5 @@ public class OpenShiftRepository {
 
         return sb.append(configuration.getCartridgeType().getDeploymentDir()).append(path).toString();
     }
+
 }

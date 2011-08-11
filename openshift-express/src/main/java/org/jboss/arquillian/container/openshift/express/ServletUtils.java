@@ -72,6 +72,11 @@ class ServletUtils {
             names.add(getServletName((Class<?>) servletClass));
         }
 
+        // jsp/default servlet for WAR archives
+        if (ArchiveUtil.isWarArchive(deployment)) {
+            names.add("default");
+        }
+
         return names;
 
     }

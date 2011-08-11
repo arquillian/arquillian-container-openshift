@@ -41,8 +41,6 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptor;
  * OpenShift Express container. Deploys application or descriptor to an existing OpenShift instance. This instance must be
  * created before the test itself.
  *
- * The Git repository must be enabled to use binary deployments only.
- *
  * <p>
  * See {@link OpenShiftExpressConfiguration} for required configuration
  * </p>
@@ -84,20 +82,31 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
     @Override
     public void start() throws LifecycleException {
+
         // initialize repository
         long beforeInit = System.currentTimeMillis();
-
         OpenShiftExpressConfiguration conf = configuration.get();
+
+        log.info("Preparing Arquillian OpenShift Express container at " + conf.getRootContextUrl());
+
         this.repository.set(new OpenShiftRepository(conf, credentialsProvider));
 
         if (log.isLoggable(Level.FINE)) {
             log.fine("Git repository initialization took " + (System.currentTimeMillis() - beforeInit) + "ms");
         }
+
+        OpenShiftRepository repo = repository.get();
+        repo.markArquillianLifeCycle();
     }
 
     @Override
     public void stop() throws LifecycleException {
-        // no-op
+        OpenShiftExpressConfiguration conf = configuration.get();
+        OpenShiftRepository repo = repository.get();
+
+        log.info("Shutting down Arquillian OpenShift Express container at " + conf.getRootContextUrl());
+
+        repo.unmarkArquillianLifeCycle();
     }
 
     @Override
