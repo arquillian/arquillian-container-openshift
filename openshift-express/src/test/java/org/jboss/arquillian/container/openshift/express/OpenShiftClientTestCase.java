@@ -35,7 +35,7 @@ public class OpenShiftClientTestCase {
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
-        return ShrinkWrap.create(WebArchive.class, "ROOT.war").addAsDirectories("images")
+        return ShrinkWrap.create(WebArchive.class, "arquillian.war").addAsDirectories("images")
                 .addAsWebResource("test.war/health.jsp", "health.jsp").addAsWebResource("test.war/index.html", "index.html")
                 .addAsWebResource("test.war/snoop.jsp", "snoop.jsp").setWebXML("test.war/WEB-INF/web.xml");
     }

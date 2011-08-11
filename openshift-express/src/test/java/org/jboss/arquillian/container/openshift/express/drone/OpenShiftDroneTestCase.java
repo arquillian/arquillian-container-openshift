@@ -22,6 +22,7 @@ import org.jboss.arquillian.ajocado.Ajocado;
 import org.jboss.arquillian.ajocado.framework.AjaxSelenium;
 import org.jboss.arquillian.ajocado.locator.IdLocator;
 import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.drone.api.annotation.Drone;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -38,6 +39,7 @@ import org.junit.runner.RunWith;
  * @version $Revision: $
  */
 @RunWith(Arquillian.class)
+@RunAsClient
 public class OpenShiftDroneTestCase {
 
     @Drone
@@ -45,9 +47,9 @@ public class OpenShiftDroneTestCase {
 
     private static final IdLocator ARQUILLIAN = Ajocado.id("arquillian.info");
 
-    @Deployment(testable = false)
+    @Deployment
     public static WebArchive createDeployment() {
-        return ShrinkWrap.create(WebArchive.class, "ROOT.war").addAsDirectories("images")
+        return ShrinkWrap.create(WebArchive.class, "arquillian.war").addAsDirectories("images")
                 .addAsWebResource("test.war/health.jsp", "health.jsp").addAsWebResource("test.war/index.html", "index.html")
                 .addAsWebResource("test.war/snoop.jsp", "snoop.jsp").setWebXML("test.war/WEB-INF/web.xml");
     }
