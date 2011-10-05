@@ -24,15 +24,20 @@ import org.jboss.arquillian.container.openshift.express.servlet.Servlet3;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
+import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Tests metadata creation
- *
+ * 
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
- *
+ * @author <a href="http://community.jboss.org/people/jharting">Jozef Hartinger</a>
+ * 
  */
 public class ProtocolMetadataParserTestCase {
 
@@ -81,6 +86,25 @@ public class ProtocolMetadataParserTestCase {
         Assert.assertEquals("Context root of arquillian.war is set correctly", "/arquillian", contextRoot);
     }
 
+    /**
+     * Verifies that parsing does not fail on a package imported using ZipImporter.
+     * @see ARQ-621
+     */
+    @Test
+    @Ignore
+    public void testImportedWar() {
+        OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        ProtocolMetaData data = parser.parse(sampleImportedWar());
+
+        HTTPContext context = data.getContext(HTTPContext.class);
+
+        Assert.assertNotNull(context.getServletByName("default"));
+        String contextRoot = context.getServletByName("default").getContextRoot();
+        Assert.assertEquals("Context root of arquillian.war is set correctly", "/arquillian", contextRoot);
+    }
+
     private EnterpriseArchive sampleEar() {
         return ShrinkWrap.create(EnterpriseArchive.class)
                 .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian1.war").addClass(Servlet1.class))
@@ -95,4 +119,12 @@ public class ProtocolMetadataParserTestCase {
         return ShrinkWrap.create(WebArchive.class, "arquillian.war").addClass(Object.class);
     }
 
+    private WebArchive sampleImportedWar() {
+
+        WebArchive archive = ShrinkWrap.create(WebArchive.class, "test.war").addClass(Object.class)
+                .addAsLibrary(ShrinkWrap.create(JavaArchive.class, "test.jar").addClass(String.class));
+
+        return ShrinkWrap.create(ZipImporter.class, "test.war")
+                .importFrom(archive.as(ZipExporter.class).exportAsInputStream()).as(WebArchive.class);
+    }
 }
