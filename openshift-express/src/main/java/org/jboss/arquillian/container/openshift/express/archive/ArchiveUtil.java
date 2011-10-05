@@ -17,13 +17,16 @@
 package org.jboss.arquillian.container.openshift.express.archive;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
+import org.jboss.shrinkwrap.api.Filter;
 import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
@@ -45,6 +48,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
  *
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
+ * @author <a href="http://community.jboss.org/people/jharting">Jozef Hartinger</a>
  *
  */
 public class ArchiveUtil {
@@ -128,10 +132,10 @@ public class ArchiveUtil {
             Archive<?> archive, Class<T> needle) {
 
         if (isEarArchive(archive)) {
-            for (JavaArchive jar : archive.getAsType(JavaArchive.class, AssetUtil.JAR_FILTER)) {
+            for (JavaArchive jar : getScannableNestedArchives(archive, JavaArchive.class, AssetUtil.JAR_FILTER)) {
                 getDefinedClasses(classNames, needleImpls, jar, needle);
             }
-            for (WebArchive war : archive.getAsType(WebArchive.class, AssetUtil.WAR_FILTER)) {
+            for (WebArchive war : getScannableNestedArchives(archive, WebArchive.class, AssetUtil.WAR_FILTER)) {
                 getDefinedClasses(classNames, needleImpls, war, needle);
             }
         } else if (isWarArchive(archive)) {
@@ -141,7 +145,7 @@ public class ArchiveUtil {
             for (Entry<ArchivePath, Node> node : archive.getContent(AssetUtil.CLASS_FILTER).entrySet()) {
                 getDefinedClasses(classNames, needleImpls, ArchiveType.WAR, node.getKey(), node.getValue(), needle, cl);
             }
-            for (JavaArchive jar : archive.getAsType(JavaArchive.class, AssetUtil.JAR_FILTER)) {
+            for (JavaArchive jar : getScannableNestedArchives(archive, JavaArchive.class, AssetUtil.JAR_FILTER)) {
                 getDefinedClasses(classNames, needleImpls, jar, needle);
             }
         } else if (isJarArchive(archive)) {
@@ -153,6 +157,24 @@ public class ArchiveUtil {
             }
         }
 
+    }
+    
+    /**
+     * Does the same as {@link Archive#getAsType(Class, Filter)} but filters out nodes which cannot be scanned for classes
+     * (cannot be converted to <X>)
+     */
+    private static <X extends Archive<X>> Collection<X> getScannableNestedArchives(Archive<?> archive, Class<X> type,
+            Filter<ArchivePath> filter) {
+        Collection<X> nestedArchives = new HashSet<X>();
+        for (Map.Entry<ArchivePath, Node> entry : archive.getContent(filter).entrySet()) {
+            try {
+                X nestedArchive = archive.getAsType(type, entry.getKey());
+                nestedArchives.add(nestedArchive);
+            } catch (IllegalArgumentException ignored) {
+                // ignored, we are not able to convert this type to X so we won't need it anyway
+            }
+        }
+        return nestedArchives;
     }
 
     // worker method

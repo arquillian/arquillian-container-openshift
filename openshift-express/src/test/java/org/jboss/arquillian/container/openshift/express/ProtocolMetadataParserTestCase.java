@@ -29,7 +29,6 @@ import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -91,7 +90,6 @@ public class ProtocolMetadataParserTestCase {
      * @see ARQ-621
      */
     @Test
-    @Ignore
     public void testImportedWar() {
         OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
         ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
@@ -102,7 +100,7 @@ public class ProtocolMetadataParserTestCase {
 
         Assert.assertNotNull(context.getServletByName("default"));
         String contextRoot = context.getServletByName("default").getContextRoot();
-        Assert.assertEquals("Context root of arquillian.war is set correctly", "/arquillian", contextRoot);
+        Assert.assertEquals("Context root of arquillian.war is set correctly", "/test", contextRoot);
     }
 
     private EnterpriseArchive sampleEar() {
