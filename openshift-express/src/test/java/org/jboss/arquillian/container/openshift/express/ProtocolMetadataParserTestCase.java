@@ -68,7 +68,7 @@ public class ProtocolMetadataParserTestCase {
         Assert.assertNotNull(context.getServletByName("Servlet1"));
 
         String contextRoot = context.getServletByName("Servlet1").getContextRoot();
-        Assert.assertEquals("Context root of ROOT.war is set correctly", "/", contextRoot);
+        Assert.assertEquals("Context root of ROOT.war is set correctly", "", contextRoot);
     }
 
     @Test
