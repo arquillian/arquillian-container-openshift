@@ -233,12 +233,12 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
       log.fine("Checking if deployment is deployed: " + url);
 
-      long timeout = System.currentTimeMillis() + 30000;
+      long timeout = System.currentTimeMillis() + configuration.get().getDeploymentTime();
 
       UrlChecker checker = new UrlChecker(timeout, url.toString());
       if (!checker.checkUrlWithRetry())
       {
-         throw new DeploymentException("Following path were not reachable within " + 30000 + " ms after git push. "
+         throw new DeploymentException("Following path were not reachable within " + configuration.get().getDeploymentTime() + " ms after git push. "
                + "Check if following archives are constructed properly:\n" + deploymentName);
       }
    }

@@ -26,6 +26,7 @@ Following configuration properties have sensible defaults, but can be modified:
 
 * _type_ - cartridge type, e.g. jbossas-7.0
 * _libraDomain_ - domain where OpenShift server instance is running, e.g. rhcloud.com
+* _deploymentTime_ - a maximal time in ms to finish deployment,e.g. 30000
 
 Following configuration properties are optional
 
