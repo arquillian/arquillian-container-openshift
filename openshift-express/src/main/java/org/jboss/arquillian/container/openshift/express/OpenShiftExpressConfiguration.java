@@ -75,6 +75,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
     private CartridgeType cartridgeType;
 
     private String passphrase = System.getenv("SSH_PASSPHRASE");
+    
+    private long deploymentTime = 30000;
 
     /*
      * (non-Javadoc)
@@ -253,6 +255,14 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
 
         return new URL(sb.toString());
     }
+
+    public long getDeploymentTime() {
+        return deploymentTime;
+    }
+
+    public void setDeploymentTime(long deploymentTime) {
+        this.deploymentTime = deploymentTime;
+    }    
 
     private URI constructRemoteRepositoryURI() throws URISyntaxException {
         StringBuilder sb = new StringBuilder("ssh://");
