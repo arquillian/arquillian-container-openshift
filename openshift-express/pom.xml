@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <!-- Parent -->
     <parent>
@@ -23,12 +24,25 @@
 
         <!-- Versioning -->
         <version.ejb3_api>3.1.0</version.ejb3_api>
-        <version.arquillian_ajocado>1.0.0.CR1</version.arquillian_ajocado>
+        <version.arquillian_drone>1.0.0.CR3</version.arquillian_drone>
+        <version.arquillian_ajocado>1.0.0.CR2</version.arquillian_ajocado>
         <version.jgit>1.0.0.201106090707-r</version.jgit>
         <version.jboss_as>7.0.0.Final</version.jboss_as>
         <version.jboss_spec>1.0.0.Final</version.jboss_spec>
 
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.arquillian.extension</groupId>
+                <artifactId>arquillian-drone-bom</artifactId>
+                <version>${version.arquillian_drone}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!-- Dependencies -->
     <dependencies>
@@ -62,7 +76,7 @@
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-initialcontext</artifactId>
         </dependency>
-        
+
         <!-- JGit support -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
@@ -149,7 +163,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.9</version>
                         <configuration>
                             <includes>
                                 <include>**/*TestCase*</include>
