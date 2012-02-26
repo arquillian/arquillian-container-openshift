@@ -40,7 +40,7 @@ public enum ArchiveType {
         @Override
         public ArchivePath asArchivePath(String className) {
             String slashedClassName = className.replaceAll("\\.", "/").concat(".class");
-            return ArchivePaths.create("/WEB-INF/classes/", slashedClassName);
+            return ArchivePaths.create("/", slashedClassName);
         }
     },
     WAR {
