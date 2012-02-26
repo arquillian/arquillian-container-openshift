@@ -23,20 +23,25 @@ import org.jboss.arquillian.container.openshift.express.servlet.Servlet2;
 import org.jboss.arquillian.container.openshift.express.servlet.Servlet3;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
+import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.importer.ZipImporter;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.application5.ApplicationDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.jbossweb60.JbossWebDescriptor;
 import org.junit.Test;
 
 /**
  * Tests metadata creation
- * 
+ *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  * @author <a href="http://community.jboss.org/people/jharting">Jozef Hartinger</a>
- * 
+ *
  */
 public class ProtocolMetadataParserTestCase {
 
@@ -85,8 +90,23 @@ public class ProtocolMetadataParserTestCase {
         Assert.assertEquals("Context root of arquillian.war is set correctly", "/arquillian", contextRoot);
     }
 
+    @Test
+    public void testNoServletsJBossWebXml() {
+        OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        ProtocolMetaData data = parser.parse(sampleWarJBossWebXml());
+
+        HTTPContext context = data.getContext(HTTPContext.class);
+
+        Assert.assertNotNull(context.getServletByName("default"));
+        String contextRoot = context.getServletByName("default").getContextRoot();
+        Assert.assertEquals("Context root of arquillian.war is set correctly", "/the-context-root", contextRoot);
+    }
+
     /**
      * Verifies that parsing does not fail on a package imported using ZipImporter.
+     *
      * @see ARQ-621
      */
     @Test
@@ -103,10 +123,42 @@ public class ProtocolMetadataParserTestCase {
         Assert.assertEquals("Context root of arquillian.war is set correctly", "/test", contextRoot);
     }
 
+    @Test
+    public void testEarWithApplicationXml() {
+        OpenShiftExpressConfiguration configuration = new OpenShiftExpressConfiguration();
+        ProtocolMetaDataParser parser = new ProtocolMetaDataParser(configuration);
+
+        ProtocolMetaData data = parser.parse(sampleEarWithApplicationXml());
+
+        HTTPContext context = data.getContext(HTTPContext.class);
+        Assert.assertNotNull(context.getServletByName("Servlet1"));
+
+        String contextRoot = context.getServletByName("Servlet1").getContextRoot();
+        Assert.assertEquals("Context root of arquillian1.war is set correctly", "/arquillian-ear-1", contextRoot);
+
+        Assert.assertNotNull(context.getServletByName("Servlet2"));
+        contextRoot = context.getServletByName("Servlet2").getContextRoot();
+
+        Assert.assertEquals("Context root of arquillian1.war is set correctly", "/arquillian-ear-2", contextRoot);
+
+    }
+
     private EnterpriseArchive sampleEar() {
         return ShrinkWrap.create(EnterpriseArchive.class)
                 .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian1.war").addClass(Servlet1.class))
                 .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian2.war").addClasses(Servlet2.class, Servlet3.class));
+    }
+
+    private EnterpriseArchive sampleEarWithApplicationXml() {
+        return ShrinkWrap
+                .create(EnterpriseArchive.class)
+                .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian1.war").addClass(Servlet1.class))
+                .addAsModule(ShrinkWrap.create(WebArchive.class, "arquillian2.war").addClasses(Servlet2.class, Servlet3.class))
+                .setApplicationXML(
+                        new StringAsset(Descriptors.create(ApplicationDescriptor.class).createModule().getOrCreateWeb()
+                                .webUri("arquillian1.war").contextRoot("arquillian-ear-1").up().up().createModule()
+                                .getOrCreateWeb().webUri("arquillian2.war").contextRoot("arquillian-ear-2").up().up()
+                                .exportAsString()));
     }
 
     private WebArchive sampleWar() {
@@ -117,12 +169,20 @@ public class ProtocolMetadataParserTestCase {
         return ShrinkWrap.create(WebArchive.class, "arquillian.war").addClass(Object.class);
     }
 
+    private WebArchive sampleWarJBossWebXml() {
+        return ShrinkWrap
+                .create(WebArchive.class, "arquillian.war")
+                .addClass(Object.class)
+                .add(new StringAsset(Descriptors.create(JbossWebDescriptor.class).contextRoot("the-context-root")
+                        .exportAsString()), ArchivePaths.create("WEB-INF/jboss-web.xml"));
+    }
+
     private WebArchive sampleImportedWar() {
 
         WebArchive archive = ShrinkWrap.create(WebArchive.class, "test.war").addClass(Object.class)
                 .addAsLibrary(ShrinkWrap.create(JavaArchive.class, "test.jar").addClass(String.class));
 
-        return ShrinkWrap.create(ZipImporter.class, "test.war")
-                .importFrom(archive.as(ZipExporter.class).exportAsInputStream()).as(WebArchive.class);
+        return ShrinkWrap.create(ZipImporter.class, "test.war").importFrom(archive.as(ZipExporter.class).exportAsInputStream())
+                .as(WebArchive.class);
     }
 }

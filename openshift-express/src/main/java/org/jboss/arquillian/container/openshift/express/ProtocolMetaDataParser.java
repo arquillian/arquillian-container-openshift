@@ -16,17 +16,27 @@
  */
 package org.jboss.arquillian.container.openshift.express;
 
+import java.io.InputStream;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.openshift.express.archive.ArchiveUtil;
 import org.jboss.arquillian.container.openshift.express.archive.AssetUtil;
+import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
 import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ArchivePaths;
+import org.jboss.shrinkwrap.api.Node;
 import org.jboss.shrinkwrap.api.spec.EnterpriseArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.descriptor.api.Descriptors;
+import org.jboss.shrinkwrap.descriptor.api.application5.ApplicationDescriptor;
+import org.jboss.shrinkwrap.descriptor.api.application5.ModuleType;
+import org.jboss.shrinkwrap.descriptor.api.application5.WebType;
+import org.jboss.shrinkwrap.descriptor.api.jbossweb60.JbossWebDescriptor;
 
 /**
  * Metadata parser using OpenShift configuration and classpath scanning as no metadata are provided from from container itself
@@ -90,38 +100,108 @@ public class ProtocolMetaDataParser {
     private void extractEnterpriseWebArchiveContexts(HTTPContext context, EnterpriseArchive enterpriseDeployment,
             WebArchive webDeployment) {
 
-        // FIXME include application.xml scanning to get war context as well
-        extractWebContext(context, webDeployment.getName(), webDeployment);
+        String deploymentName = webDeployment.getName();
+        for (String servletName : ServletUtils.getServletNames(webDeployment)) {
+            String contextRoot = getContextContextRootFromApplicationXml(enterpriseDeployment, deploymentName);
+            if (contextRoot == null) {
+                contextRoot = toContextRoot(deploymentName, webDeployment);
+            }
+            context.add(new Servlet(servletName, contextRoot));
+
+            if (log.isLoggable(Level.FINE)) {
+                log.fine("Context " + context.getHost() + " enriched with " + servletName + " at " + contextRoot);
+            }
+        }
     }
 
     private void extractWebContext(HTTPContext context, String deploymentName, WebArchive deployment) {
 
         for (String servletName : ServletUtils.getServletNames(deployment)) {
-            context.add(new Servlet(servletName, toContextName(deploymentName)));
+            String contextRoot = toContextRoot(deploymentName, deployment);
+            context.add(new Servlet(servletName, contextRoot));
 
             if (log.isLoggable(Level.FINE)) {
-                log.fine("Context " + context.getHost() + " enriched with " + servletName + " at "
-                        + toContextName(deploymentName));
+                log.fine("Context " + context.getHost() + " enriched with " + servletName + " at " + contextRoot);
             }
         }
 
     }
 
-    private String toContextName(String deploymentName) {
+    private String toContextRoot(String deploymentName, WebArchive deployment) {
+
+        // check archive content for jboss-web.xml
+        String contextRoot = getContextNameFromJbossWebXml(deployment);
+        if (contextRoot != null) {
+            return contextRoot;
+        }
 
         // root.war is a kind of special
         if ("root.war".equals(deploymentName.toLowerCase())) {
             return "";
         }
 
-        String correctedName = deploymentName;
-        if (correctedName.startsWith("/")) {
-            correctedName = correctedName.substring(1);
-        }
-        if (correctedName.indexOf(".") != -1) {
-            correctedName = correctedName.substring(0, correctedName.lastIndexOf("."));
-        }
-        return correctedName;
+        return removeTrailingSuffix(removeFirstSlash(deploymentName));
     }
 
+    private String getContextNameFromJbossWebXml(WebArchive deployment) {
+
+        Node node = deployment.get(ArchivePaths.create("WEB-INF/jboss-web.xml"));
+        if (node == null) {
+            return null;
+        }
+
+        String contextRoot = null;
+        InputStream is = null;
+        try {
+            is = node.getAsset().openStream();
+            JbossWebDescriptor descriptor = Descriptors.importAs(JbossWebDescriptor.class).from(is);
+            contextRoot = descriptor.getContextRoot();
+        } catch (NullPointerException e) {
+            // no asset was given, ignoring
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+
+        return removeFirstSlash(contextRoot);
+
+    }
+
+    private String getContextContextRootFromApplicationXml(EnterpriseArchive earDeployment, String deploymentName) {
+        Node node = earDeployment.get(ArchivePaths.create("META-INF/application.xml"));
+        if (node == null) {
+            return null;
+        }
+
+        String contextRoot = null;
+        InputStream is = null;
+        try {
+            is = node.getAsset().openStream();
+            ApplicationDescriptor descriptor = Descriptors.importAs(ApplicationDescriptor.class).from(is);
+            List<ModuleType<ApplicationDescriptor>> modules = descriptor.getAllModule();
+            // get all modules and find a web module which defines contextRoot for given WAR
+            for (ModuleType<ApplicationDescriptor> module : modules) {
+                WebType<ModuleType<ApplicationDescriptor>> webModule = module.getOrCreateWeb();
+                if (deploymentName.equals(webModule.getWebUri())) {
+                    contextRoot = removeFirstSlash(webModule.getContextRoot());
+                }
+
+            }
+        } catch (NullPointerException e) {
+            // no asset was given, ignoring
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+
+        return removeFirstSlash(contextRoot);
+
+    }
+
+    private String removeFirstSlash(String contextPath) {
+        return contextPath != null && contextPath.startsWith("/") ? contextPath.substring(1) : contextPath;
+    }
+
+    private String removeTrailingSuffix(String contextPath) {
+        return contextPath != null && contextPath.indexOf(".") != -1 ? contextPath.substring(0, contextPath.lastIndexOf("."))
+                : contextPath;
+    }
 }
