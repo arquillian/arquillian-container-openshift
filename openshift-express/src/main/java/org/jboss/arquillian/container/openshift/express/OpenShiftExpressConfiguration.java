@@ -46,6 +46,7 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * <ul>
  * <li>type - cartridge type, e.g. jbossas-7.0</li>
  * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcloud.com</li>
+ * <li>deploymentTimeoutInSeconds - timeout in seconds to wait for a deployment to be finished</li>
  * </ul>
  *
  * <p>
@@ -75,8 +76,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
     private CartridgeType cartridgeType;
 
     private String passphrase = System.getenv("SSH_PASSPHRASE");
-    
-    private long deploymentTime = 30000;
+
+    private long deploymentTimeoutInSeconds = 30;
 
     /*
      * (non-Javadoc)
@@ -256,13 +257,13 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
         return new URL(sb.toString());
     }
 
-    public long getDeploymentTime() {
-        return deploymentTime;
+    public long getDeploymentTimeoutInSeconds() {
+        return deploymentTimeoutInSeconds;
     }
 
-    public void setDeploymentTime(long deploymentTime) {
-        this.deploymentTime = deploymentTime;
-    }    
+    public void setDeploymentTimeoutInSeconds(long deploymentTimeoutInSeconds) {
+        this.deploymentTimeoutInSeconds = deploymentTimeoutInSeconds;
+    }
 
     private URI constructRemoteRepositoryURI() throws URISyntaxException {
         StringBuilder sb = new StringBuilder("ssh://");
