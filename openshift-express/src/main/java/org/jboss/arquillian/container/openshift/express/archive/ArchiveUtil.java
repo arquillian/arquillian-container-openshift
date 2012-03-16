@@ -158,7 +158,7 @@ public class ArchiveUtil {
         }
 
     }
-    
+
     /**
      * Does the same as {@link Archive#getAsType(Class, Filter)} but filters out nodes which cannot be scanned for classes
      * (cannot be converted to <X>)
@@ -208,8 +208,9 @@ public class ArchiveUtil {
                 throw new IllegalStateException("Unable to load class using ByteAssetClassLoader", e);
             } catch (ClassNotFoundException e) {
                 log.warning("Unable to load class using ByteAssetClassLoader: " + e.getCause());
-            } catch (NoClassDefFoundError e) {
-                log.warning("Unable to load class using ByteAssetClassLoader: " + e.getCause());
+            } catch (LinkageError e) {
+                log.warning("Unable to load class using ByteAssetClassLoader: "
+                        + (e.getCause() == null ? e.getClass().getName() : e.getMessage()));
             }
         }
 
