@@ -207,13 +207,11 @@ public class ArchiveUtil {
             } catch (ByteAssetClassNotFoundException e) {
                 throw new IllegalStateException("Unable to load class using ByteAssetClassLoader", e);
             } catch (ClassNotFoundException e) {
-                log.warning("Unable to load class using ByteAssetClassLoader: " + e.getCause());
+                log.warning("Unable to load class using ByteAssetClassLoader: " + e.getMessage());
             } catch (LinkageError e) {
-                log.warning("Unable to load class using ByteAssetClassLoader: "
-                        + (e.getCause() == null ? e.getClass().getName() : e.getMessage()));
+                log.warning("Unable to load class using ByteAssetClassLoader: " + e.getMessage());
             }
         }
 
     }
-
 }
