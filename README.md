@@ -30,7 +30,9 @@ Following configuration properties have sensible defaults, but can be modified:
 
 Following configuration properties are optional
 
-* _passphrase_ - the passphrase to SSH key, can be set via SSH_PASSPHRASE environment variable
+* _passphrase_ - the passphrase to SSH identity key, can be set via SSH_PASSPHRASE environment variable
+* _identityFile_ - the path to SSH identity key (must be absolute), can be set via SSH_IDENTITYFILE environment variable
+* _disableStrictHostChecking_ - set it to true to disable StrictHostChecking policy 
 
 For jbossas-7.0 cartridge automatic deployment is disabled during execution of the tests. This means your application
 built from pom.xml is not available during testing. A workaround is to use a different application name 

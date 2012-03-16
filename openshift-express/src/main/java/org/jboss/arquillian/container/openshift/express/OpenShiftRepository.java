@@ -30,6 +30,8 @@ import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.jboss.arquillian.container.openshift.express.auth.ArquillianSshSessionFactory;
 import org.jboss.arquillian.container.openshift.express.util.GitUtil;
 import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.openshift.express.util.MarkingUtil;
@@ -44,7 +46,7 @@ public class OpenShiftRepository {
     static Logger log = Logger.getLogger(OpenShiftRepository.class.getName());
 
     private static final String SOURCE_BUILD_IDENTIFIER_FILE = "pom.xml";
-    
+
     private OpenShiftExpressConfiguration configuration;
     private CredentialsProvider credentialsProvider;
     private PersonIdent identification;
@@ -65,6 +67,9 @@ public class OpenShiftRepository {
         this.configuration = configuration;
         this.credentialsProvider = credentialsProvider;
         this.deployments = new LinkedHashSet<String>();
+
+        // override default SSH factory
+        SshSessionFactory.setInstance(new ArquillianSshSessionFactory(configuration));
 
         try {
             initialize();
@@ -89,12 +94,12 @@ public class OpenShiftRepository {
     }
 
     public boolean hasSourceBuild() {
-       if(CartridgeType.JBOSSAS7 == configuration.getCartridgeType()) {
-          return git.fileExists(SOURCE_BUILD_IDENTIFIER_FILE);
-       }
-       return false;
+        if (CartridgeType.JBOSSAS7 == configuration.getCartridgeType()) {
+            return git.fileExists(SOURCE_BUILD_IDENTIFIER_FILE);
+        }
+        return false;
     }
-    
+
     public OpenShiftRepository markArquillianLifeCycle() {
         markingUtil.markArquillianLifecycle();
         git.commit(identification, "Starting Arquillian lifecycle on OpenShift container");
@@ -129,8 +134,7 @@ public class OpenShiftRepository {
     }
 
     /**
-     * Adds and, commits under given path in the deployments directory which is scanned by OpenShift
-     * Express instance
+     * Adds and, commits under given path in the deployments directory which is scanned by OpenShift Express instance
      *
      *
      * @param path Path representing file name under deployments directory
@@ -138,29 +142,29 @@ public class OpenShiftRepository {
      * @return Modified repository
      */
     public OpenShiftRepository add(String path, InputStream content) {
-       // store file
-       try {
-           storeAsFileInRepository(path, content);
-       } catch (IOException e) {
-           throw new IllegalStateException("Unable to copy context to the Git repository", e);
-       }
+        // store file
+        try {
+            storeAsFileInRepository(path, content);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to copy context to the Git repository", e);
+        }
 
-       if (log.isLoggable(Level.FINE)) {
-           log.fine("Copied " + path + " to the local repository");
-       }
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Copied " + path + " to the local repository");
+        }
 
-       // add file to repository
-       deployments.add(path);
-       git.add(asFilePattern(path));
-       markingUtil.mark(asFilePattern(path) + ".dodeploy");
+        // add file to repository
+        deployments.add(path);
+        git.add(asFilePattern(path));
+        markingUtil.mark(asFilePattern(path) + ".dodeploy");
 
-       git.commit(identification, "Preparing " + path + " for OpenShift Express Deployment");
+        git.commit(identification, "Preparing " + path + " for OpenShift Express Deployment");
 
-       if (log.isLoggable(Level.FINE)) {
-           log.fine("Commited " + path + " to the repository");
-       }
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Commited " + path + " to the repository");
+        }
 
-       return this;
+        return this;
     }
 
     /**
@@ -174,7 +178,7 @@ public class OpenShiftRepository {
         push();
         return this;
     }
-    
+
     /**
      * Removes, and commits under given path in deployments directory
      *
@@ -182,25 +186,24 @@ public class OpenShiftRepository {
      * @return Modified repository
      */
     public OpenShiftRepository remove(String path) {
-       deployments.remove(path);
-       git.remove(asFilePattern(path));
-       markingUtil.unmark(asFilePattern(path) + ".dodeploy");
-       markingUtil.unmark(asFilePattern(path) + ".deployed");
+        deployments.remove(path);
+        git.remove(asFilePattern(path));
+        markingUtil.unmark(asFilePattern(path) + ".dodeploy");
+        markingUtil.unmark(asFilePattern(path) + ".deployed");
 
-       git.commit(identification, "Removing " + path + " Arquillian OpenShift Express Deployment");
-       if (log.isLoggable(Level.FINE)) {
-           log.fine("Commited " + path + " removal to the local repository");
-       }
+        git.commit(identification, "Removing " + path + " Arquillian OpenShift Express Deployment");
+        if (log.isLoggable(Level.FINE)) {
+            log.fine("Commited " + path + " removal to the local repository");
+        }
 
-       return this;
+        return this;
     }
-    
-    public void push() 
-    {
-       git.push(credentialsProvider);
-       if (log.isLoggable(Level.INFO)) {
-           log.info("Pushed to the remote repository " + configuration.getRemoteRepositoryUri());
-       }
+
+    public void push() {
+        git.push(credentialsProvider);
+        if (log.isLoggable(Level.INFO)) {
+            log.info("Pushed to the remote repository " + configuration.getRemoteRepositoryUri());
+        }
     }
 
     private void storeAsFileInRepository(String path, InputStream input) throws IOException {

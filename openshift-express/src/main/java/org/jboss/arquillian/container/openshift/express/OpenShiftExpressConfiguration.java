@@ -53,7 +53,9 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * Following configuration properties are optional
  * </p>
  * <ul>
- * <li>passphrase - the passphrase to SSH key, can be set via SSH_PASSPHRASE environment variable</li>
+ * <li>passphrase - the passphrase to SSH identity key, can be set via SSH_PASSPHRASE environment variable</li>
+ * <li>identityFile - the path to a private SSH identity key, can be set via SSH_IDENTITYFILE environment variable</li>
+ * <li>disableStrictHostChecking - can disable StrictHostChecking. By default this this policy is set to {@code ask}</li>
  * </ul>
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
@@ -76,6 +78,10 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
     private CartridgeType cartridgeType;
 
     private String passphrase = System.getenv("SSH_PASSPHRASE");
+
+    private String identityFile = System.getenv("SSH_IDENTITYFILE");
+
+    private boolean disableStrictHostChecking = false;
 
     private long deploymentTimeoutInSeconds = 30;
 
@@ -202,6 +208,34 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
      */
     public void setSshUserName(String sshUserName) {
         this.sshUserName = sshUserName;
+    }
+
+    /**
+     * @return the identityFile
+     */
+    public String getIdentityFile() {
+        return identityFile;
+    }
+
+    /**
+     * @param identityFile the privateIdentityFile to set
+     */
+    public void setIdentityFile(String identityFile) {
+        this.identityFile = identityFile;
+    }
+
+    /**
+     * @return the disableStrictHostChecking
+     */
+    public boolean isDisableStrictHostChecking() {
+        return disableStrictHostChecking;
+    }
+
+    /**
+     * @param disableStrictHostChecking the disableStrictHostChecking to set
+     */
+    public void setDisableStrictHostChecking(boolean disableStrictHostChecking) {
+        this.disableStrictHostChecking = disableStrictHostChecking;
     }
 
     /**
