@@ -23,15 +23,19 @@ import java.util.logging.Logger;
 
 import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
+import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.NoMessageException;
+import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
+import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.errors.UnmergedPathException;
@@ -45,8 +49,8 @@ import org.eclipse.jgit.transport.CredentialsProvider;
  *
  */
 public class GitUtil {
-    private static final Logger log = Logger.getLogger(GitUtil.class.getName());
 
+    private static final Logger log = Logger.getLogger(GitUtil.class.getName());
     private Git git;
 
     /**
@@ -149,6 +153,34 @@ public class GitUtil {
         }
     }
 
+    public void restoreFromBranch(CredentialsProvider credentialsProvider, String branchName) {
+        try {
+            String masterBranch = git.getRepository().getBranch();
+            git.checkout().setName(branchName).call();
+            git.branchDelete().setBranchNames(masterBranch).setForce(true).call();
+            git.branchRename().setOldName(branchName).setNewName(masterBranch).call();
+            git.push().setForce(true).call();
+        } catch (Exception ex) {
+            throw new IllegalStateException("Unable to restore repository from branch <" + branchName + ">.", ex);
+        }
+    }
+
+    public void createBranch(String name) {
+        try {
+            CreateBranchCommand command = git.branchCreate();
+            command.setName(name);
+            command.call();
+        } catch (JGitInternalException e) {
+            throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
+        } catch (RefAlreadyExistsException e) {
+            throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
+        } catch (RefNotFoundException e) {
+            throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
+        } catch (InvalidRefNameException e) {
+            throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
+        }
+    }
+
     /**
      * Gets project directory
      *
@@ -159,9 +191,9 @@ public class GitUtil {
     }
 
     public boolean fileExists(String fileName) {
-       return new File(getRepositoryDirectory(), fileName).exists();
+        return new File(getRepositoryDirectory(), fileName).exists();
     }
-    
+
     // update cache after changes
     private void updateCache(DirCache cache) throws IOException {
         if (!cache.lock()) {
@@ -173,5 +205,4 @@ public class GitUtil {
         }
 
     }
-
 }
