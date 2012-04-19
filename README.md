@@ -27,6 +27,7 @@ Following configuration properties have sensible defaults, but can be modified:
 * _type_ - cartridge type, e.g. jbossas-7.0
 * _libraDomain_ - domain where OpenShift server instance is running, e.g. rhcloud.com
 * _deploymentTimeoutInSeconds_ - timeout in seconds to wait for a deployment to be finished
+* _discardHistory_ - activates discarding deploying/undeploying commits from Arquillian
 
 Following configuration properties are optional
 

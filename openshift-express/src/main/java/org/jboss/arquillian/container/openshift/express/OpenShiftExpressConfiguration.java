@@ -47,6 +47,7 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * <li>type - cartridge type, e.g. jbossas-7.0</li>
  * <li>libraDomain - domain where OpenShift server instance is running, e.g. rhcloud.com</li>
  * <li>deploymentTimeoutInSeconds - timeout in seconds to wait for a deployment to be finished</li>
+ * <li>discardHistory - activates discarding deploying/undeploying commits from Arquillian</li>
  * </ul>
  *
  * <p>
@@ -84,6 +85,8 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
     private boolean disableStrictHostChecking = false;
 
     private long deploymentTimeoutInSeconds = 30;
+
+    private boolean discardHistory = false;
 
     /*
      * (non-Javadoc)
@@ -297,6 +300,14 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
 
     public void setDeploymentTimeoutInSeconds(long deploymentTimeoutInSeconds) {
         this.deploymentTimeoutInSeconds = deploymentTimeoutInSeconds;
+    }
+
+    public boolean isDiscardHistory() {
+        return discardHistory;
+    }
+
+    public void setDiscardHistory(boolean discardHistory) {
+        this.discardHistory = discardHistory;
     }
 
     private URI constructRemoteRepositoryURI() throws URISyntaxException {

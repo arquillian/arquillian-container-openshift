@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +36,7 @@ import org.jboss.arquillian.container.openshift.express.auth.ArquillianSshSessio
 import org.jboss.arquillian.container.openshift.express.util.GitUtil;
 import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.openshift.express.util.MarkingUtil;
+import org.jboss.arquillian.core.spi.Validate;
 
 /**
  * Abstraction of a Git repository for OpenShift.
@@ -55,6 +57,8 @@ public class OpenShiftRepository {
     private MarkingUtil markingUtil;
 
     private Set<String> deployments;
+
+    private String lastSavedState;
 
     /**
      * Connects to remote repository and clones it to a temporary location on local file system. Determines deployments
@@ -113,7 +117,6 @@ public class OpenShiftRepository {
         markingUtil.unmarkArquillianLifecycle();
         git.commit(identification, "Stopping Arquillian lifecycle on OpenShift container");
         git.push(credentialsProvider);
-
         return this;
     }
 
@@ -205,7 +208,23 @@ public class OpenShiftRepository {
             log.info("Pushed to the remote repository " + configuration.getRemoteRepositoryUri());
         }
     }
+    
+    public String saveState() {
+        String branch = UUID.randomUUID().toString();
+        git.createBranch(branch.toString());
+        lastSavedState = branch;
+        return branch;
+    }
 
+    public void loadState(String branch) {
+        Validate.notNull(branch, "The branch used to load state from can't be null.");
+        git.restoreFromBranch(credentialsProvider, branch);
+    }
+    
+    public String getLastSavedState() {
+        return lastSavedState;
+    }
+    
     private void storeAsFileInRepository(String path, InputStream input) throws IOException {
         // create holder for the content
         File content = new File(asRepositoryPath(path));
@@ -241,7 +260,6 @@ public class OpenShiftRepository {
         }
 
         this.identification = new PersonIdent("Arquillian OpenShift Express", "arquillian@jboss.org");
-
     }
 
     private String asRepositoryPath(String path) {

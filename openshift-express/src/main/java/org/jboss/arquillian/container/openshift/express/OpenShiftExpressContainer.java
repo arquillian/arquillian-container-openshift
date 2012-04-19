@@ -107,6 +107,10 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
       }
 
       OpenShiftRepository repo = repository.get();
+      if (conf.isDiscardHistory()) {
+         String state = repo.saveState();
+         log.info("State of the repository has been saved to the branch <" + state + ">.");
+      }
       if(repo.hasSourceBuild()) {
          repo.markArquillianLifeCycle();
       }
@@ -122,6 +126,11 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
       if(repo.hasSourceBuild()) {
          repo.unmarkArquillianLifeCycle();
+      }
+      if (conf.isDiscardHistory()) {
+         String state = repo.getLastSavedState();
+         repo.loadState(state);
+         log.info("State of the repository has been loaded from the branch <" + state + ">.");
       }
    }
 
