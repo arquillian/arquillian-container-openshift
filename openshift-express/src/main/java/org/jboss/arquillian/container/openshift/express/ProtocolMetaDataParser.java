@@ -154,7 +154,7 @@ public class ProtocolMetaDataParser {
         InputStream is = null;
         try {
             is = node.getAsset().openStream();
-            JbossWebDescriptor descriptor = Descriptors.importAs(JbossWebDescriptor.class).from(is);
+            JbossWebDescriptor descriptor = Descriptors.importAs(JbossWebDescriptor.class).fromStream(is);
             contextRoot = descriptor.getContextRoot();
         } catch (NullPointerException e) {
             // no asset was given, ignoring
@@ -176,7 +176,7 @@ public class ProtocolMetaDataParser {
         InputStream is = null;
         try {
             is = node.getAsset().openStream();
-            ApplicationDescriptor descriptor = Descriptors.importAs(ApplicationDescriptor.class).from(is);
+            ApplicationDescriptor descriptor = Descriptors.importAs(ApplicationDescriptor.class).fromStream(is);
             List<ModuleType<ApplicationDescriptor>> modules = descriptor.getAllModule();
             // get all modules and find a web module which defines contextRoot for given WAR
             for (ModuleType<ApplicationDescriptor> module : modules) {

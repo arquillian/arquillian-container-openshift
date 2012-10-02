@@ -29,6 +29,9 @@ import java.util.logging.Logger;
 
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.SshSessionFactory;
@@ -78,6 +81,12 @@ public class OpenShiftRepository {
         try {
             initialize();
         } catch (IOException e) {
+            throw new RuntimeException("Unable to initialize temporary Git repository", e);
+        } catch (InvalidRemoteException e) {
+            throw new RuntimeException("Unable to initialize temporary Git repository", e);
+        } catch (TransportException e) {
+            throw new RuntimeException("Unable to initialize temporary Git repository", e);
+        } catch (GitAPIException e) {
             throw new RuntimeException("Unable to initialize temporary Git repository", e);
         }
 
@@ -208,7 +217,7 @@ public class OpenShiftRepository {
             log.info("Pushed to the remote repository " + configuration.getRemoteRepositoryUri());
         }
     }
-    
+
     public String saveState() {
         String branch = UUID.randomUUID().toString();
         git.createBranch(branch.toString());
@@ -220,11 +229,11 @@ public class OpenShiftRepository {
         Validate.notNull(branch, "The branch used to load state from can't be null.");
         git.restoreFromBranch(credentialsProvider, branch);
     }
-    
+
     public String getLastSavedState() {
         return lastSavedState;
     }
-    
+
     private void storeAsFileInRepository(String path, InputStream input) throws IOException {
         // create holder for the content
         File content = new File(asRepositoryPath(path));
@@ -237,7 +246,7 @@ public class OpenShiftRepository {
         IOUtils.closeQuietly(output);
     }
 
-    private void initialize() throws IOException {
+    private void initialize() throws IOException, InvalidRemoteException, TransportException, GitAPIException {
         File repository = File.createTempFile("arq-openshift", "express");
         repository.delete();
         repository.mkdirs();

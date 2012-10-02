@@ -28,6 +28,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.ConcurrentRefUpdateException;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -36,9 +37,10 @@ import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.NoMessageException;
 import org.eclipse.jgit.api.errors.RefAlreadyExistsException;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.UnmergedPathsException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.dircache.DirCache;
-import org.eclipse.jgit.errors.UnmergedPathException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.transport.CredentialsProvider;
 
@@ -78,6 +80,8 @@ public class GitUtil {
             throw new IllegalStateException("Unable to add file to the Git cache", e);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to add file to the Git cache", e);
+        } catch (GitAPIException e) {
+            throw new IllegalStateException("Unable to add file to the Git cache", e);
         }
 
         if (log.isLoggable(Level.FINE)) {
@@ -100,6 +104,8 @@ public class GitUtil {
         } catch (NoFilepatternException e) {
             throw new IllegalStateException("Unable to remove file from the Git cache", e);
         } catch (IOException e) {
+            throw new IllegalStateException("Unable to remove file from the Git cache", e);
+        } catch (GitAPIException e) {
             throw new IllegalStateException("Unable to remove file from the Git cache", e);
         }
 
@@ -125,13 +131,15 @@ public class GitUtil {
             throw new IllegalStateException("Unable to commit into Git repository", e);
         } catch (NoMessageException e) {
             throw new IllegalStateException("Unable to commit into Git repository", e);
-        } catch (UnmergedPathException e) {
-            throw new IllegalStateException("Unable to commit into Git repository", e);
         } catch (ConcurrentRefUpdateException e) {
             throw new IllegalStateException("Unable to commit into Git repository", e);
         } catch (JGitInternalException e) {
             throw new IllegalStateException("Unable to commit into Git repository", e);
         } catch (WrongRepositoryStateException e) {
+            throw new IllegalStateException("Unable to commit into Git repository", e);
+        } catch (UnmergedPathsException e) {
+            throw new IllegalStateException("Unable to commit into Git repository", e);
+        } catch (GitAPIException e) {
             throw new IllegalStateException("Unable to commit into Git repository", e);
         }
     }
@@ -149,6 +157,10 @@ public class GitUtil {
         } catch (JGitInternalException e) {
             throw new IllegalStateException("Unable to push into remote Git repository", e);
         } catch (InvalidRemoteException e) {
+            throw new IllegalStateException("Unable to push into remote Git repository", e);
+        } catch (TransportException e) {
+            throw new IllegalStateException("Unable to push into remote Git repository", e);
+        } catch (GitAPIException e) {
             throw new IllegalStateException("Unable to push into remote Git repository", e);
         }
     }
@@ -177,6 +189,8 @@ public class GitUtil {
         } catch (RefNotFoundException e) {
             throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
         } catch (InvalidRefNameException e) {
+            throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
+        } catch (GitAPIException e) {
             throw new IllegalStateException("Unable to create a new branch <" + name + ">.", e);
         }
     }

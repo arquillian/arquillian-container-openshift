@@ -18,9 +18,6 @@ package org.jboss.arquillian.container.openshift.express.drone;
 
 import java.net.URL;
 
-import org.jboss.arquillian.ajocado.Ajocado;
-import org.jboss.arquillian.ajocado.framework.AjaxSelenium;
-import org.jboss.arquillian.ajocado.locator.IdLocator;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.drone.api.annotation.Drone;
 import org.jboss.arquillian.junit.Arquillian;
@@ -30,6 +27,8 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.openqa.selenium.By;
+import org.openqa.selenium.firefox.FirefoxDriver;
 
 /**
  * JBossEmbeddedIntegrationTestCase
@@ -41,9 +40,9 @@ import org.junit.runner.RunWith;
 public class OpenShiftDroneTestCase {
 
     @Drone
-    AjaxSelenium browser;
+    FirefoxDriver browser;
 
-    private static final IdLocator ARQUILLIAN = Ajocado.id("arquillian.info");
+    private static final By ARQUILLIAN = By.id("arquillian.info");
 
     @Deployment(testable = false)
     public static WebArchive createDeployment() {
@@ -54,9 +53,8 @@ public class OpenShiftDroneTestCase {
 
     @Test
     public void testApplicationIsDeployed(@ArquillianResource URL contextPath) throws Exception {
-        browser.open(contextPath);
-        browser.waitForPageToLoad();
+        browser.get(contextPath.toString());
 
-        Assert.assertTrue("Arquillian page is visible in browser", browser.isElementPresent(ARQUILLIAN));
+        Assert.assertTrue("Arquillian page is visible in browser", browser.findElement(ARQUILLIAN).isDisplayed());
     }
 }
