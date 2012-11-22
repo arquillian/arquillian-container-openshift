@@ -313,6 +313,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
          try
          {
             URLConnection connection = new URL(url).openConnection();
+
             if (!(connection instanceof HttpURLConnection))
             {
                throw new IllegalStateException("Not an http connection! " + connection);
@@ -348,5 +349,6 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
             }
          }
       }
+
    }
 }

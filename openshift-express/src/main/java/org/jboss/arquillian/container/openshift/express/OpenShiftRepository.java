@@ -105,7 +105,7 @@ public class OpenShiftRepository {
     }
 
     public OpenShiftRepository markArquillianLifeCycle() {
-        markingUtil.markArquillianLifecycle();
+        //markingUtil.markArquillianLifecycle();
         git.commit(identification, "Starting Arquillian lifecycle on OpenShift container");
 
         // no push, push will happen during first deployment
@@ -114,7 +114,7 @@ public class OpenShiftRepository {
     }
 
     public OpenShiftRepository unmarkArquillianLifeCycle() {
-        markingUtil.unmarkArquillianLifecycle();
+        //markingUtil.unmarkArquillianLifecycle();
         git.commit(identification, "Stopping Arquillian lifecycle on OpenShift container");
         git.push(credentialsProvider);
         return this;
@@ -208,7 +208,7 @@ public class OpenShiftRepository {
             log.info("Pushed to the remote repository " + configuration.getRemoteRepositoryUri());
         }
     }
-    
+
     public String saveState() {
         String branch = UUID.randomUUID().toString();
         git.createBranch(branch.toString());
@@ -220,11 +220,11 @@ public class OpenShiftRepository {
         Validate.notNull(branch, "The branch used to load state from can't be null.");
         git.restoreFromBranch(credentialsProvider, branch);
     }
-    
+
     public String getLastSavedState() {
         return lastSavedState;
     }
-    
+
     private void storeAsFileInRepository(String path, InputStream input) throws IOException {
         // create holder for the content
         File content = new File(asRepositoryPath(path));

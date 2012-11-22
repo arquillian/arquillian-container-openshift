@@ -57,6 +57,9 @@ import org.jboss.arquillian.container.spi.client.deployment.Validate;
  * <li>passphrase - the passphrase to SSH identity key, can be set via SSH_PASSPHRASE environment variable</li>
  * <li>identityFile - the path to a private SSH identity key, can be set via SSH_IDENTITYFILE environment variable</li>
  * <li>disableStrictHostChecking - can disable StrictHostChecking. By default this this policy is set to {@code ask}</li>
+ * <li>proxyRequests - invoke tests directly on nodes, proxy invocation on loadbalancer. By default this this policy is set to false</li>
+ * <li>restApiUrl - Url to openshift's REST service.</li>
+ * <li>trustAllSslStores - Trust all ssl certificate stores, also self-signed.</li>
  * </ul>
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
@@ -88,11 +91,18 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
 
     private boolean discardHistory = false;
 
+    private String restApiUrl = "https://openshift.redhat.com/broker/rest/";
+
+    private boolean proxyRequests;
+
+    private boolean trustAllSslStores;
+
     /*
      * (non-Javadoc)
      *
      * @see org.jboss.arquillian.spi.client.container.ContainerConfiguration#validate()
      */
+    @Override
     public void validate() throws ConfigurationException {
         Validate.notNullOrEmpty(namespace,
                 "OpenShift Express namespace must be specified, please fill in \"namespace\" property in Arquillian configuration");
@@ -315,5 +325,29 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
         sb.append(sshUserName).append("@").append(getHostName()).append("/~/git/").append(application).append(".git/");
 
         return new URI(sb.toString());
+    }
+
+    public String getRestApiUrl() {
+        return restApiUrl;
+    }
+
+    public void setRestApiUrl(String restApiUrl) {
+        this.restApiUrl = restApiUrl;
+    }
+
+    public boolean getProxyRequests() {
+        return proxyRequests;
+    }
+
+    public void setProxyRequests(boolean proxyRequests) {
+        this.proxyRequests = proxyRequests;
+    }
+
+    public boolean getTrustAllSslStores() {
+        return trustAllSslStores;
+    }
+
+    public void setTrustAllSslStores(boolean trustAllSslStores) {
+        this.trustAllSslStores = trustAllSslStores;
     }
 }
