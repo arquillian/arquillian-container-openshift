@@ -19,10 +19,13 @@ public class OpenShiftTopology {
         return INSTANCE;
     }
 
-    public URI pickNode(String clusterId) {
+    /**
+     * Each time returns next node for a deployment
+     */
+    public URI pickNode(String clusterId, String deploymentName) {
         Cluster cluster = getCluster(clusterId);
         if (cluster != null) {
-            return cluster.pick();
+            return cluster.pick(deploymentName);
         }
         return null;
     }

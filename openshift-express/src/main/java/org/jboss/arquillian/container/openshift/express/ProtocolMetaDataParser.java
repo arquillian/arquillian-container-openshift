@@ -80,7 +80,7 @@ public class ProtocolMetaDataParser {
         HTTPContext context;
 
         if (configuration.getProxyRequests()) {
-            context = createClusterAwareHTTPContext();
+            context = createClusterAwareHTTPContext(deployment.getName());
         } else {
             context = new HTTPContext(configuration.getHostName(), 80);
         }
@@ -217,7 +217,7 @@ public class ProtocolMetaDataParser {
                 : contextPath;
     }
 
-    private HTTPContext createClusterAwareHTTPContext() {
+    private HTTPContext createClusterAwareHTTPContext(String deploymentName) {
         OpenShiftTopology openShiftTopology = OpenShiftTopology.instance();
 
         String clusterId = configuration.getLibraDomain() + ":" + configuration.getNamespace() + ":" + configuration.getApplication();
@@ -226,8 +226,8 @@ public class ProtocolMetaDataParser {
             parseCluster(openShiftTopology, clusterId);
         }
 
-        //pick one node for each HTTPContext instance
-        URI internalNode = openShiftTopology.pickNode(clusterId);
+        //pick one node for each HTTPContext instance, different deployments can share the same nodes
+        URI internalNode = openShiftTopology.pickNode(clusterId, deploymentName);
         String name = internalNode.getHost() + ":" + internalNode.getPort() + ":" + configuration.getHostName();
         HTTPContext context = new HTTPContext(name, internalNode.getHost(), internalNode.getPort());
         return context;
