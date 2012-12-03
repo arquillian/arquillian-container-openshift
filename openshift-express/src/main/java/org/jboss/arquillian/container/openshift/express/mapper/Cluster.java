@@ -27,12 +27,22 @@ class Cluster {
         return id;
     }
 
+    /**
+     * Get next URI for a group.
+     */
     public URI pick(String group) {
         try {
             return uris.get(nextIndex(group));
         } catch (IndexOutOfBoundsException e) {
             throw new RuntimeException("No remaining uris for group " + group + ".");
         }
+    }
+
+    /**
+     * Resets index of picked URIs.
+     */
+    public void reset() {
+        indexes.clear();
     }
 
     private int nextIndex(String group) {

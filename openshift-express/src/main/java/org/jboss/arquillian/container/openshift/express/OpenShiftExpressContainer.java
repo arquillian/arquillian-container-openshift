@@ -194,7 +194,6 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
       {
          waitUntilDeployed(AS7PingArchive.ARCHIVE_NAME, archive.getName());
       }
-
       ProtocolMetaDataParser parser = new ProtocolMetaDataParser(conf);
       return parser.parse(archive);
    }

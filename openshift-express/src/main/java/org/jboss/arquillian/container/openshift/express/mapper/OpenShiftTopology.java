@@ -43,6 +43,15 @@ public class OpenShiftTopology {
         return getCluster(clusterId) != null;
     }
 
+    /**
+     * Reset indexes of returned nodes.
+     */
+    public void reset() {
+        for (Cluster cluster : clusters) {
+            cluster.reset();
+        }
+    }
+
     @Override
     public String toString() {
         return clusters.toString();

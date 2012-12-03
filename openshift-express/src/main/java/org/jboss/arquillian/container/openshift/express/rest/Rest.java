@@ -61,7 +61,7 @@ public class Rest {
                 httpConnection.addRequestProperty("Accept", "application/json");
                 addBasicAuthPass(httpConnection);
                 if (configuration.getTrustAllSslStores()) {
-                    truestSelfsignedCert(httpConnection);
+                    trustSelfsignedCert(httpConnection);
                 }
 
                 InputStream is = (InputStream) httpConnection.getContent();
@@ -78,7 +78,7 @@ public class Rest {
         return new ArrayList<URI>();
     }
 
-    private void truestSelfsignedCert(URLConnection restConnection) {
+    private void trustSelfsignedCert(URLConnection restConnection) {
         if (restConnection instanceof HttpsURLConnection) {
             log.info("setting non validating ssl socket factory");
             HttpsURLConnection ssl = (HttpsURLConnection) restConnection;

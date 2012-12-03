@@ -85,7 +85,7 @@
             <type>pom</type>
         </dependency>
 
-        <!-- OpenShift rest -->
+        <!-- OpenShift rest (Base64) -->
         <dependency>
             <groupId>org.jboss</groupId>   
             <artifactId>jboss-common-core</artifactId>
