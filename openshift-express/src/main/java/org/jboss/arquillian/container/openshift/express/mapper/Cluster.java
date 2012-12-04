@@ -58,4 +58,8 @@ class Cluster {
     public String toString() {
         return id + " " + uris.toString();
     }
+
+    public List<URI> getURIs() {
+        return uris;
+    }
 }

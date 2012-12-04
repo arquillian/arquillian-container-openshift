@@ -3,11 +3,17 @@ package org.jboss.arquillian.container.openshift.express.mapper;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
+
+import org.jboss.arquillian.container.openshift.express.OpenShiftExpressConfiguration;
+import org.jboss.arquillian.container.openshift.express.rest.Rest;
 
 /**
  * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
  */
 public class OpenShiftTopology {
+
+    private static final Logger log = Logger.getLogger(OpenShiftTopology.class.getName());
 
     private static OpenShiftTopology INSTANCE = new OpenShiftTopology();
 
@@ -57,6 +63,21 @@ public class OpenShiftTopology {
         return clusters.toString();
     }
 
+    /**
+     * Read cluster topology if not read yet
+     */
+    public void parseCluster(OpenShiftExpressConfiguration configuration) {
+       if (!isClusterParsed(getClusterId(configuration))) {
+          Rest rest = new Rest(configuration);
+          List<URI> internalNodes = rest.readCluterTopology();
+          for (URI internalNode : internalNodes)
+          {
+             addNode(getClusterId(configuration), internalNode);
+          }
+          log.info("OpenShift cluster: " + toString());
+       }
+    }
+
     private Cluster getCluster(String clusterId) {
         for (Cluster cluster : clusters) {
             if (cluster.getId().equals(clusterId)) {
@@ -64,6 +85,18 @@ public class OpenShiftTopology {
             }
         }
         return null;
+    }
+
+    public String getClusterId(OpenShiftExpressConfiguration configuration) {
+        return configuration.getLibraDomain() + ":" + configuration.getNamespace() + ":" + configuration.getApplication();
+    }
+
+    public List<URI> getAllNodes() {
+        List<URI> uris = new ArrayList<URI>();
+        for (Cluster cluster : clusters) {
+            uris.addAll(cluster.getURIs());
+        }
+        return uris;
     }
 
 }

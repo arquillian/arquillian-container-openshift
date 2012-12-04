@@ -25,7 +25,6 @@ import java.util.logging.Logger;
 import org.jboss.arquillian.container.openshift.express.archive.ArchiveUtil;
 import org.jboss.arquillian.container.openshift.express.archive.AssetUtil;
 import org.jboss.arquillian.container.openshift.express.mapper.OpenShiftTopology;
-import org.jboss.arquillian.container.openshift.express.rest.Rest;
 import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
@@ -219,28 +218,13 @@ public class ProtocolMetaDataParser {
 
     private HTTPContext createClusterAwareHTTPContext(String deploymentName) {
         OpenShiftTopology openShiftTopology = OpenShiftTopology.instance();
-
-        String clusterId = configuration.getLibraDomain() + ":" + configuration.getNamespace() + ":" + configuration.getApplication();
-
-        if (!openShiftTopology.isClusterParsed(clusterId)) {
-            parseCluster(openShiftTopology, clusterId);
-        }
+        String clusterId = openShiftTopology.getClusterId(configuration);
 
         //pick one node for each HTTPContext instance, different deployments can share the same nodes
         URI internalNode = openShiftTopology.pickNode(clusterId, deploymentName);
         String name = internalNode.getHost() + ":" + internalNode.getPort() + ":" + configuration.getHostName();
         HTTPContext context = new HTTPContext(name, internalNode.getHost(), internalNode.getPort());
         return context;
-    }
-
-    private void parseCluster(OpenShiftTopology openShiftTopology, String clusterId) {
-        Rest rest = new Rest(configuration);
-        List<URI> internalNodes = rest.readCluterTopology();
-
-        for (URI internalNode : internalNodes) {
-            openShiftTopology.addNode(clusterId, internalNode);
-        }
-        log.info("OpenShift cluster: " + openShiftTopology);
     }
 
 }
