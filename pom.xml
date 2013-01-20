@@ -72,6 +72,7 @@
 
     <modules>
         <module>openshift-express</module>
+        <module>protocol-proxied-servlet</module>
         <!--
         <module>openshift-flex</module>
         -->

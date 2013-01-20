@@ -41,10 +41,11 @@ import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.InstanceProducer;
 import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.spi.ServiceLoader;
-import org.jboss.arquillian.protocol.servlet.proxy.RemoteProxyServlet;
+import org.jboss.arquillian.protocol.proxied_servlet.proxy.RemoteProxyServlet;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+
 
 /**
  * OpenShift Express container. Deploys application or descriptor to an existing OpenShift instance. This instance must be

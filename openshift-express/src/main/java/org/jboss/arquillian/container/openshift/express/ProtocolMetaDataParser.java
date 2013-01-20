@@ -29,6 +29,7 @@ import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
+import org.jboss.arquillian.protocol.proxied_servlet.ProxyAwareHTTPContext;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Node;
@@ -80,15 +81,15 @@ public class ProtocolMetaDataParser {
 
         if (configuration.getProxyRequests()) {
             context = createClusterAwareHTTPContext(deployment.getName());
+            //TODO remove cast
+            ((ProxyAwareHTTPContext)context).setArquillianProxyServletHost(configuration.getHostName());
+            ((ProxyAwareHTTPContext)context).setArquillianProxyServletPort(80);
         } else {
             context = new HTTPContext(configuration.getHostName(), 80);
         }
 
         ProtocolMetaData protocol = new ProtocolMetaData();
         protocol.addContext(context);
-
-        context.setArquillianProxyServletHost(configuration.getHostName());
-        context.setArquillianProxyServletPort(80);
 
         if (ArchiveUtil.isWarArchive(deployment)) {
             extractWebArchiveContexts(context, (WebArchive) deployment);
@@ -216,15 +217,14 @@ public class ProtocolMetaDataParser {
                 : contextPath;
     }
 
-    private HTTPContext createClusterAwareHTTPContext(String deploymentName) {
+    private ProxyAwareHTTPContext createClusterAwareHTTPContext(String deploymentName) {
         OpenShiftTopology openShiftTopology = OpenShiftTopology.instance();
         String clusterId = openShiftTopology.getClusterId(configuration);
 
         //pick one node for each HTTPContext instance, different deployments can share the same nodes
         URI internalNode = openShiftTopology.pickNode(clusterId, deploymentName);
         String name = internalNode.getHost() + ":" + internalNode.getPort() + ":" + configuration.getHostName();
-        HTTPContext context = new HTTPContext(name, internalNode.getHost(), internalNode.getPort());
-        return context;
+        return new ProxyAwareHTTPContext(name, internalNode.getHost(), internalNode.getPort());
     }
 
 }
