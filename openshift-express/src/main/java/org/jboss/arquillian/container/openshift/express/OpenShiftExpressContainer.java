@@ -20,13 +20,16 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
+import org.jboss.arquillian.container.openshift.express.mapper.OpenShiftTopology;
 import org.jboss.arquillian.container.openshift.express.ping.AS7PingArchive;
 import org.jboss.arquillian.container.spi.client.container.DeployableContainer;
 import org.jboss.arquillian.container.spi.client.container.DeploymentException;
@@ -38,9 +41,11 @@ import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.InstanceProducer;
 import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.core.spi.ServiceLoader;
+import org.jboss.arquillian.protocol.proxied_servlet.proxy.RemoteProxyServlet;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.descriptor.api.Descriptor;
+
 
 /**
  * OpenShift Express container. Deploys application or descriptor to an existing OpenShift instance. This instance must be
@@ -51,6 +56,7 @@ import org.jboss.shrinkwrap.descriptor.api.Descriptor;
  * </p>
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
+ * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
  *
  */
 public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftExpressConfiguration>
@@ -92,7 +98,6 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
    @Override
    public void start() throws LifecycleException
    {
-
       // initialize repository
       long beforeInit = System.currentTimeMillis();
       OpenShiftExpressConfiguration conf = configuration.get();
@@ -192,9 +197,13 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
       if (CartridgeType.JBOSSAS7 == conf.getCartridgeType())
       {
-         waitUntilDeployed(AS7PingArchive.ARCHIVE_NAME, archive.getName());
-      }
+         if (configuration.get().getProxyRequests()) {
+             waitUntilClusterDeployed(AS7PingArchive.ARCHIVE_NAME, archive.getName());
+         } else {
+             waitUntilDeployed(AS7PingArchive.ARCHIVE_NAME, archive.getName());
+         }
 
+      }
       ProtocolMetaDataParser parser = new ProtocolMetaDataParser(conf);
       return parser.parse(archive);
    }
@@ -236,14 +245,47 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
 
    private void waitUntilDeployed(String pingArchiveName, String deploymentName) throws DeploymentException
    {
-      StringBuilder url = new StringBuilder().append("http://").append(configuration.get().getHostName())
+       StringBuilder url = new StringBuilder().append("http://").append(configuration.get().getHostName())
             .append(":80/").append(createDeploymentName(pingArchiveName)).append("/deploy?name=")
             .append(deploymentName);
 
+      checkUrl(deploymentName, url);
+   }
+
+   private void waitUntilClusterDeployed(String pingArchiveName, String deploymentName) throws DeploymentException
+   {
+      OpenShiftTopology openShiftTopology = OpenShiftTopology.instance();
+      OpenShiftExpressConfiguration conf = configuration.get();
+
+      openShiftTopology.parseCluster(conf);
+
+      StringBuilder url = new StringBuilder()
+         .append("http://")
+         .append(configuration.get().getHostName())
+         .append(":80/")
+         .append(createDeploymentName(deploymentName))
+         .append(RemoteProxyServlet.SERVLET_MAPPING)
+         .append("?pingArchiveName=")
+         .append(createDeploymentName(pingArchiveName))
+         .append("&deploymentName=")
+         .append(deploymentName);
+
+      List<URI> nodes = openShiftTopology.getAllNodes();
+      for (URI node : nodes)
+      {
+         String internalHostParams =
+            "&internalHost=" + node.getHost() +
+            "&internalPort=" + node.getPort();
+
+         url.append(internalHostParams);
+         checkUrl(deploymentName, url);
+      }
+   }
+
+   private void checkUrl(String deploymentName, StringBuilder url) throws DeploymentException
+   {
       log.fine("Checking if deployment is deployed: " + url);
-
       long timeout = System.currentTimeMillis() + configuration.get().getDeploymentTimeoutInSeconds() * 1000;
-
       UrlChecker checker = new UrlChecker(timeout, url.toString());
       if (!checker.checkUrlWithRetry())
       {
@@ -313,6 +355,7 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
          try
          {
             URLConnection connection = new URL(url).openConnection();
+
             if (!(connection instanceof HttpURLConnection))
             {
                throw new IllegalStateException("Not an http connection! " + connection);
@@ -348,5 +391,6 @@ public class OpenShiftExpressContainer implements DeployableContainer<OpenShiftE
             }
          }
       }
+
    }
 }

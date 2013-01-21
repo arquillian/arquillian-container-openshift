@@ -17,16 +17,19 @@
 package org.jboss.arquillian.container.openshift.express;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.openshift.express.archive.ArchiveUtil;
 import org.jboss.arquillian.container.openshift.express.archive.AssetUtil;
+import org.jboss.arquillian.container.openshift.express.mapper.OpenShiftTopology;
 import org.jboss.arquillian.container.openshift.express.util.IOUtils;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.HTTPContext;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.Servlet;
+import org.jboss.arquillian.protocol.proxied_servlet.ProxyAwareHTTPContext;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.Node;
@@ -47,6 +50,7 @@ import org.jboss.shrinkwrap.descriptor.api.jbossweb60.JbossWebDescriptor;
  *
  * @author <a href="mailto:kpiwko@redhat.com">Karel Piwko</a>
  * @author <a href="mailto:aslak@redhat.com">Aslak Knutsen</a>
+ * @author <a href="mailto:mlazar@redhat.com">Matej Lazar</a>
  *
  */
 public class ProtocolMetaDataParser {
@@ -73,8 +77,18 @@ public class ProtocolMetaDataParser {
      * @return Metadata information
      */
     public ProtocolMetaData parse(Archive<?> deployment) {
+        HTTPContext context;
+
+        if (configuration.getProxyRequests()) {
+            context = createClusterAwareHTTPContext(deployment.getName());
+            //TODO remove cast
+            ((ProxyAwareHTTPContext)context).setArquillianProxyServletHost(configuration.getHostName());
+            ((ProxyAwareHTTPContext)context).setArquillianProxyServletPort(80);
+        } else {
+            context = new HTTPContext(configuration.getHostName(), 80);
+        }
+
         ProtocolMetaData protocol = new ProtocolMetaData();
-        HTTPContext context = new HTTPContext(configuration.getHostName(), 80);
         protocol.addContext(context);
 
         if (ArchiveUtil.isWarArchive(deployment)) {
@@ -124,7 +138,6 @@ public class ProtocolMetaDataParser {
                 log.fine("Context " + context.getHost() + " enriched with " + servletName + " at " + contextRoot);
             }
         }
-
     }
 
     private String toContextRoot(String deploymentName, WebArchive deployment) {
@@ -163,7 +176,6 @@ public class ProtocolMetaDataParser {
         }
 
         return removeFirstSlash(contextRoot);
-
     }
 
     private String getContextContextRootFromApplicationXml(EnterpriseArchive earDeployment, String deploymentName) {
@@ -204,4 +216,15 @@ public class ProtocolMetaDataParser {
         return contextPath != null && contextPath.indexOf(".") != -1 ? contextPath.substring(0, contextPath.lastIndexOf("."))
                 : contextPath;
     }
+
+    private ProxyAwareHTTPContext createClusterAwareHTTPContext(String deploymentName) {
+        OpenShiftTopology openShiftTopology = OpenShiftTopology.instance();
+        String clusterId = openShiftTopology.getClusterId(configuration);
+
+        //pick one node for each HTTPContext instance, different deployments can share the same nodes
+        URI internalNode = openShiftTopology.pickNode(clusterId, deploymentName);
+        String name = internalNode.getHost() + ":" + internalNode.getPort() + ":" + configuration.getHostName();
+        return new ProxyAwareHTTPContext(name, internalNode.getHost(), internalNode.getPort());
+    }
+
 }

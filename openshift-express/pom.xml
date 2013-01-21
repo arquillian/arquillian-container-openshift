@@ -29,7 +29,7 @@
         <version.jgit>1.3.0.201202151440-r</version.jgit>
         <version.jboss_as>7.0.0.Final</version.jboss_as>
         <version.servlet_api>1.0.0.Final</version.servlet_api>
-
+        <version.json-lib>2.2.3</version.json-lib>
     </properties>
 
     <dependencyManagement>
@@ -76,6 +76,11 @@
             <groupId>org.jboss.arquillian.testenricher</groupId>
             <artifactId>arquillian-testenricher-initialcontext</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.arquillian.protocol</groupId>
+            <artifactId>arquillian-protocol-proxied-servlet</artifactId>  
+            <version>1.0.0.Final-SNAPSHOT</version>      
+        </dependency>
 
         <!-- Deployment archive parsing -->
         <dependency>
@@ -83,6 +88,13 @@
             <artifactId>shrinkwrap-descriptors-depchain</artifactId>
             <version>1.2.0-alpha-2</version>
             <type>pom</type>
+        </dependency>
+
+        <!-- OpenShift rest (Base64) -->
+        <dependency>
+            <groupId>org.jboss</groupId>   
+            <artifactId>jboss-common-core</artifactId>
+            <version>2.2.14.GA</version>
         </dependency>
 
         <!-- JGit support -->
@@ -148,6 +160,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>net.sf.json-lib</groupId>
+        	   <artifactId>json-lib</artifactId>
+        	   <version>${version.json-lib}</version>
+        </dependency>
     </dependencies>
 
     <build>
