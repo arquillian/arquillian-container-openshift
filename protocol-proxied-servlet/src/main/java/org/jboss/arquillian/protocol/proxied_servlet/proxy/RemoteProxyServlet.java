@@ -2,10 +2,14 @@ package org.jboss.arquillian.protocol.proxied_servlet.proxy;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Enumeration;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.annotation.WebServlet;
@@ -35,7 +39,7 @@ public class RemoteProxyServlet extends HttpServlet {
 
         BufferedInputStream webToProxyBuf = null;
         BufferedOutputStream proxyToClientBuf = null;
-        HttpURLConnection con;
+        HttpURLConnection con = null;
 
         try{
             int statusCode;
@@ -84,24 +88,48 @@ public class RemoteProxyServlet extends HttpServlet {
 //                    response.setHeader(mapEntry.getKey().toString(), ((List)mapEntry.getValue()).get(0).toString());
 //            }
 
-            webToProxyBuf = new BufferedInputStream(con.getInputStream());
-            proxyToClientBuf = new BufferedOutputStream(response.getOutputStream());
+            InputStream is = null;
+            try {
+                is = con.getInputStream();
+            } catch (FileNotFoundException e) {
+                log.log(Level.FINE, "Not found:", e);
+            }
+            if (is != null) {
+                webToProxyBuf = new BufferedInputStream(is);
+                proxyToClientBuf = new BufferedOutputStream(response.getOutputStream());
 
-            while ((oneByte = webToProxyBuf.read()) != -1)
-                proxyToClientBuf.write(oneByte);
-
-            proxyToClientBuf.flush();
-            proxyToClientBuf.close();
-
-            webToProxyBuf.close();
-            con.disconnect();
+                while ((oneByte = webToProxyBuf.read()) != -1)
+                    proxyToClientBuf.write(oneByte);
+            }
 
         }catch(Exception e){
-            System.out.println(e.getMessage());
-            e.printStackTrace();
+            log.log(Level.SEVERE, "", e);
         }
-        finally{
-            //TODO close everything in finally
+        finally {
+            try {
+                if (proxyToClientBuf != null) {
+                    proxyToClientBuf.flush();
+                }
+            } catch (IOException e) {
+                log.log(Level.SEVERE, "Cannot flush:", e);
+            }
+
+            try {
+                if (proxyToClientBuf != null) {
+                    proxyToClientBuf.close();
+                }
+
+                if (webToProxyBuf != null) {
+                    webToProxyBuf.close();
+                }
+
+                if (con != null) {
+                    con.disconnect();
+                }
+            } catch (IOException e) {
+                log.log(Level.SEVERE, "Cannot close conection", e);
+            }
+
         }
     }
 
@@ -109,20 +137,35 @@ public class RemoteProxyServlet extends HttpServlet {
         StringBuilder sb = new StringBuilder("http://");
         String host = request.getParameter("internalHost");
         String port = request.getParameter("internalPort");
-        String contextRoot = request.getContextPath();
+
 
         sb.append(host);
         sb.append(":");
         sb.append(port);
-        sb.append(contextRoot);
-        sb.append(ServletMethodExecutor.ARQUILLIAN_SERVLET_MAPPING);
+        sb.append(getTestUrl(request));
 
-        String qs = request.getQueryString();
-        if (qs != null) {
-            sb.append("?");
-            sb.append(qs);
-        }
         return new URL(sb.toString());
+    }
+
+    private StringBuilder getTestUrl(HttpServletRequest request) {
+        String pingArchName = request.getParameter("pingArchiveName");
+
+        StringBuilder urlSb = new StringBuilder();
+        if (pingArchName != null && !pingArchName.equals("")) {
+            urlSb.append("/");
+            urlSb.append(pingArchName);
+            urlSb.append("/deploy?name=");
+            urlSb.append(request.getParameter("deploymentName"));
+        } else {
+            urlSb.append(request.getContextPath());
+            urlSb.append(ServletMethodExecutor.ARQUILLIAN_SERVLET_MAPPING);
+            String qs = request.getQueryString();
+            if (qs != null) {
+                urlSb.append("?");
+                urlSb.append(qs);
+            }
+        }
+        return urlSb;
     }
 
 }
