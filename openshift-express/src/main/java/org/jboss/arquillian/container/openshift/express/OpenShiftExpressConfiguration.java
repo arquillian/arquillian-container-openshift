@@ -84,7 +84,7 @@ public class OpenShiftExpressConfiguration implements ContainerConfiguration {
 
     private boolean disableStrictHostChecking = false;
 
-    private long deploymentTimeoutInSeconds = 30;
+    private long deploymentTimeoutInSeconds = 90;
 
     private boolean discardHistory = false;
 
