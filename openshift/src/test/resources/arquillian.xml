@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://jboss.org/schema/arquillian"
+    xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <engine>
+        <property name="deploymentExportPath">target/</property>
+    </engine>
+
+    <container qualifier="openshift" default="true">
+        <configuration>
+            <property name="namespace">arqtest</property>
+            <property name="application">testapp</property>
+            <property name="libraDomain">rhcloud.com</property>
+            <property name="sshUserName">c24e33b312fd4316bed383d9a8162dab</property>
+            <property name="login">kpiwko@redhat.com</property>
+            <property name="deploymentTimeoutInSeconds">300</property>
+        </configuration>
+    </container>
+</arquillian>

@@ -18,7 +18,7 @@
     <artifactId>arquillian-parent-openshift</artifactId>
     <version>1.0.0.Final-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Arquillian Container Parent OpenShift</name>
+    <name>Arquillian OpenShift Container Parent</name>
     <description>OpenShift Container integrations for the Arquillian Project</description>
 
     <scm>
@@ -72,6 +72,7 @@
     </build>
 
     <modules>
+        <module>openshift</module>
         <module>openshift-express</module>
     </modules>
 

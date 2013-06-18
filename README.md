@@ -1,9 +1,9 @@
 Arquillian Containers for Red Hat OpenShift
 ===========================================
 
-Register on https://openshift.redhat.com/app/ to get free access!
+Register on https://www.openshift.com to get a free access!
 
-OpenShift Express
+OpenShift Container
 -----------------
 
 This container requires user to have create a domain and application using rhc commands:
@@ -19,7 +19,7 @@ Specify following configuration in arquillian.xml file:
 
 * _namespace_ - a namespace created by rhc-create-domain tool, e.g. bar
 * _application_ - an application name created by rhc-create-app tool, e.g. foo
-* _login_ - a Red Hat login (RHN with OpenShift Express access, e.g. bar@redhat.com
+* _login_ - a Red Hat login (RHN with OpenShift access, e.g. bar@redhat.com
 * _sshUserName_ - an user name generated when an application is created by rhc-create-app tool, e.g. a7b1daad5c624157bdeea60b26cf8eba
 
 Following configuration properties have sensible defaults, but can be modified:
