@@ -1,3 +1,8 @@
+# ![Obsolete](https://dummyimage.com/700x100/fff/f00&text=This%20Repository%20Is%20Obsolete!)
+
+We don't maintain this code base anymore. If you want to use Arquillian for testing your Openshift applications head to [Arquillian Cube](https://github.com/arquillian/arquillian-cube). That's where you find latest tools!
+
+
 Arquillian Containers for Red Hat OpenShift
 ===========================================
 
